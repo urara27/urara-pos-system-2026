@@ -21,6 +21,8 @@ import { printingRoutes } from './modules/printing/routes.js';
 import { PrintingService } from './modules/printing/service.js';
 import { refundRoutes } from './modules/refunds/routes.js';
 import { RefundService } from './modules/refunds/service.js';
+import { reportRoutes } from './modules/reports/routes.js';
+import { ReportService } from './modules/reports/service.js';
 import { RealtimeHub } from './realtime/hub.js';
 
 export interface BuildAppOptions {
@@ -48,6 +50,7 @@ export async function buildApp({ db, logger = false, webDistDir = null }: BuildA
   const checkout = new CheckoutService(db, registers);
   const printing = new PrintingService(db, new PrinterRegistry(app.log));
   const refunds = new RefundService(db, registers);
+  const reports = new ReportService(db, registers);
 
   app.get('/api/system/health', async () => ({ ok: true, bootId: hub.bootId, serverTime: Date.now() }));
   authRoutes(app, auth, guards);
@@ -58,6 +61,7 @@ export async function buildApp({ db, logger = false, webDistDir = null }: BuildA
   // 管理 API は管理者ログイン必須のフックを持つので、スコープを分けて登録する
   await app.register(async (scope) => deviceAdminRoutes(scope, db, auth, hub, guards));
   await app.register(async (scope) => masterAdminRoutes(scope, { db, masters, employees, settings, hub, guards }));
+  await app.register(async (scope) => reportRoutes(scope, reports, guards));
 
   if (webDistDir && fs.existsSync(path.join(webDistDir, 'index.html'))) {
     await app.register(fastifyStatic, { root: webDistDir, wildcard: false });

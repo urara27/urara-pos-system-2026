@@ -53,5 +53,5 @@ export async function openRegister(page: Page, registerName: string) {
 /** E2E_SCREENSHOT_DIR を指定したときだけ画面を保存する（見た目の確認用） */
 export async function snap(page: Page, name: string) {
   const dir = process.env.E2E_SCREENSHOT_DIR;
-  if (dir) await page.screenshot({ path: `${dir}/${name}.png` });
+  if (dir) await page.screenshot({ path: `${dir}/${name}.png`, fullPage: true });
 }

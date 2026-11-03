@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { DiningOption, OptionGroup, Product } from '@pos/shared';
+import { yenText, type DiningOption, type OptionGroup, type Product } from '@pos/shared';
 import { priceFor } from './cart';
 
-const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
+const yen = yenText;
 
 /** 既定の選択肢を初期選択にする（売切は除く） */
 function initialSelection(groups: OptionGroup[]) {

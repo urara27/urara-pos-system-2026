@@ -522,3 +522,156 @@
   font-size: var(--font-size-28);
   line-height: var(--line-height-150);
 }
+
+/* ───── 売上・精算・操作ログ ───── */
+
+.dads .date-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+.dads .date-range__sep {
+  padding-bottom: 12px;
+}
+
+/* 指標のタイル（グラフではなく数値そのものを大きく見せる） */
+.dads .stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+.dads .stat-tile {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid var(--color-neutral-solid-gray-200);
+  border-radius: var(--border-radius-8);
+  background: var(--color-neutral-white);
+}
+.dads .stat-tile--hero {
+  grid-column: span 2;
+  border-color: var(--color-key-200);
+  background: var(--color-key-50);
+}
+.dads .stat-tile__label {
+  color: var(--color-neutral-solid-gray-600);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-700);
+}
+.dads .stat-tile__value {
+  color: var(--color-neutral-solid-gray-900);
+  font-size: var(--font-size-28);
+  font-weight: var(--font-weight-700);
+  line-height: var(--line-height-130);
+  font-variant-numeric: tabular-nums;
+}
+.dads .stat-tile--hero .stat-tile__value {
+  font-size: var(--font-size-45);
+}
+.dads .stat-tile__sub {
+  color: var(--color-neutral-solid-gray-600);
+  font-size: var(--font-size-14);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .dads .stat-tile--hero {
+    grid-column: auto;
+  }
+}
+
+.dads .report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* 時間帯別の棒グラフ: 1系列・軸と罫線は控えめ・文字は文字色のトークン */
+.dads .hourly-chart {
+  position: relative;
+}
+.dads .hourly-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dads .hourly-chart__bar {
+  fill: var(--color-primitive-blue-600);
+}
+.dads .hourly-chart__bar.is-hover {
+  fill: var(--color-primitive-blue-800);
+}
+.dads .hourly-chart__grid {
+  stroke: var(--color-neutral-solid-gray-100);
+  stroke-width: 1;
+}
+.dads .hourly-chart__zero {
+  stroke: var(--color-neutral-solid-gray-420);
+  stroke-width: 1;
+}
+.dads .hourly-chart__tick {
+  fill: var(--color-neutral-solid-gray-600);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.dads .hourly-chart rect:focus-visible {
+  outline: none;
+}
+.dads .hourly-chart__tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 8px));
+  display: grid;
+  gap: 2px;
+  min-width: 120px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-neutral-solid-gray-200);
+  border-radius: var(--border-radius-8);
+  background: var(--color-neutral-white);
+  box-shadow: var(--elevation-2);
+  color: var(--color-neutral-solid-gray-900);
+  font-size: var(--font-size-14);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.dads .table td.nowrap {
+  white-space: nowrap;
+}
+
+/* 過不足: 状態色は記号と言葉を必ず添える */
+.dads .diff {
+  font-weight: var(--font-weight-700);
+  white-space: nowrap;
+}
+.dads .diff--ok {
+  color: var(--color-semantic-success-2);
+}
+.dads .diff--short {
+  color: var(--color-semantic-error-2);
+}
+.dads .diff--over {
+  color: var(--color-semantic-warning-orange-2);
+}
+
+.dads .audit-detail td {
+  background: var(--color-neutral-solid-gray-50);
+}
+.dads .audit-detail__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.dads .audit-detail pre {
+  margin: 4px 0 0;
+  padding: 8px 12px;
+  max-height: 240px;
+  overflow: auto;
+  border-radius: var(--border-radius-6);
+  background: var(--color-neutral-white);
+  font-family: var(--font-family-mono), ui-monospace, monospace;
+  font-size: var(--font-size-14);
+  white-space: pre-wrap;
+}

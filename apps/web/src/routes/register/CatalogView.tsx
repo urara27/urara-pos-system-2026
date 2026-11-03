@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { DINING_OPTION_LABELS, DINING_OPTIONS, type Catalog, type Product, type TaxRoundingMode } from '@pos/shared';
+import { DINING_OPTION_LABELS, DINING_OPTIONS, yenText, type Catalog, type Product, type TaxRoundingMode } from '@pos/shared';
 import { api, ApiError } from '../../lib/api';
 import { groupsOf, priceFor, quote, useCart, type Quote } from './cart';
 import { DiscountPicker } from './DiscountPicker';
 import { OptionPicker } from './OptionPicker';
 
-export const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
+/** 金額の表示（マイナスは -¥900。レシートと同じ書き方） */
+export const yen = yenText;
 
 /** カタログの取得。接続・再接続時と catalog.updated で取り直す */
 export function useCatalog() {

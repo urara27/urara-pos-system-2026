@@ -85,6 +85,15 @@ pnpm モノレポ / TypeScript strict
 - 通知は `order.updated` の change = cancelled / modified。キッチンはトーストと通知音で知らせる
 - 検索は `GET /api/transactions`。レシート番号・日時を指定しなければ当日の営業日に絞る
 
+## 売上・精算（フェーズ6）
+- 集計は `modules/reports/service.ts`。定義は `packages/shared/src/reports.ts` の冒頭（純売上・客数・客単価・割引額）。集計の定義を変えたら `test/reports.test.ts` の期待値（手計算）も直す
+- 金額の集計は取引の `total` と明細の `net_amount` から行う。返品はマイナス、商品変更の追加はプラスなので、どの切り口の合計も純売上に一致する（テストで確認している）
+- 時間帯はサーバーのローカル時刻の「時」。並びは営業日の切替時刻から24時間
+- CSV は `modules/reports/csv.ts`。すべての行の先頭に店舗コード・開始日・終了日を入れる
+- 管理画面のグラフは時間帯別の1系列の棒だけ。色は DADS の `--color-primitive-blue-600`（データの塗りとして明度・コントラストを検証済み。key-900 は暗すぎて不可）。凡例なし・ツールチップあり・同じ内容の表に切り替えられる
+- 金額の表示は共有の `yenText`（マイナスは `-¥900`）。画面ごとに独自の書式を作らない
+- 操作ログの分類は `auditCategoryOf()`、表示名は `AUDIT_ACTION_LABELS`。新しい操作を `writeAudit()` で記録したら表示名も足す
+
 ## デザイン
 - 管理画面は **デジタル庁デザインシステム（DADS, https://design.digital.go.jp/dads/）** に準拠する。スタイルは `apps/web/src/routes/admin/admin.css` に集約し、`.dads` クラスの内側に閉じる（レジ・キッチン等は対象外）
 - 色・文字サイズ・行間・角丸・影は公式トークン `@digital-go-jp/design-tokens`（MIT）の CSS 変数（`--color-key-900`, `--color-neutral-solid-gray-800`, `--font-size-16`, `--border-radius-8` など）を使い、色を直書きしない
@@ -93,4 +102,4 @@ pnpm モノレポ / TypeScript strict
 
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
-- 現在: フェーズ5（返金・変更）完了。次はフェーズ6（売上・精算: 売上確認、レジ点検・精算、CSV出力、操作ログ）
+- 現在: フェーズ6（売上・精算）完了。次はフェーズ7（運用: 閉店操作、自動起動、バックアップと復元、セットアップ手順書）

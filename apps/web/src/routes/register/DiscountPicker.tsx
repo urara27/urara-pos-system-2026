@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { Discount, DiscountScope } from '@pos/shared';
+import { yenText, type Discount, type DiscountScope } from '@pos/shared';
 import type { AppliedDiscount } from './cart';
 
-const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
+const yen = yenText;
 const describe = (d: Pick<Discount, 'kind' | 'value'>) => (d.kind === 'rate' ? `${d.value}%引` : `${yen(d.value)}引`);
 
 /**

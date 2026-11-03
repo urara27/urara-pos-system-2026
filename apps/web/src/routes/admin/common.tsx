@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { yenText } from '@pos/shared';
 import { api, ApiError } from '../../lib/api';
 
 /** 管理 API 呼び出し（管理者セッション付き） */
@@ -10,7 +11,8 @@ export function errorMessage(err: unknown, fallback = 'エラーが発生しま�
   return err instanceof ApiError ? err.message : fallback;
 }
 
-export const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
+/** 金額の表示（マイナスは -¥900。レシートと同じ書き方） */
+export const yen = yenText;
 
 /** 一覧の取得と再読み込み */
 export function useAdminList<T>(path: string, key: string) {

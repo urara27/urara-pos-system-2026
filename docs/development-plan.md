@@ -177,6 +177,15 @@
 - **API**: `GET /api/transactions`（検索）、`GET /api/transactions/:id/detail`、`POST /api/transactions/:id/refund-quote`、`POST /api/transactions/:id/refund`（冪等キー・`expectedDifference` 必須）
 - **返金レシート**: 【返金】/【商品変更】、元のレシート番号、返品の明細（支払額をマイナス）、ご返金額と返金方法を載せる
 
+### フェーズ6で確定した実装（売上・精算）
+- **集計の定義**: 金額は割引後の税込。返金・変更は行った営業日・レジ・時刻に計上。純売上 = 総売上 + 返金・変更。客数 = 販売件数 − 全額返金された販売の件数（確認事項 Q10 の「会計件数」を基本に、全額返金で取り消された会計は除く）。客単価 = 純売上 ÷ 客数（切り捨て）。割引額 = 販売の割引 − 返金で戻した割引。商品別の数量は返品分を差し引く
+- **期間**: 単日（営業日）が基本で、終了日を入れると期間（今日・昨日・直近7日・今月のボタンあり）
+- **レジ点検・精算**: 開設中のレジは点検（現時点の理論在高）、閉設済みは精算結果（実査・過不足）。PayPay 売上は PayPay 側との照合用に出す
+- **CSV**: summary / products / categories / hourly / payments / dining / taxes / discounts / registers / refunds / transactions（取引明細）/ settlements。BOM 付き UTF-8、全行の先頭に店舗コード・開始日・終了日（要件4.1）
+- **操作ログ**: 分類（返金・変更／割引／価格変更／マスタ・設定／レジ開設・閉設／端末・ログイン／レシート）で絞り込み、50件ずつ新しい順。変更前後の内容を表示
+- **API**: `GET /api/admin/reports/sales`、`GET /api/admin/reports/settlements`、`GET /api/admin/reports/:kind.csv`、`GET /api/admin/audit-logs`（すべて管理者ログイン必須）
+- **画面**: 管理画面の最初のページを「売上」にした。指標はタイル、時間帯別は1系列の棒グラフ（DADS ブルー600、ツールチップ、表に切替可）
+
 ---
 
 ## 5. 計算ルール（案・テストで固定する）

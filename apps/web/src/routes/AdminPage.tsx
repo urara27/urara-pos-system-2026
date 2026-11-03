@@ -14,6 +14,9 @@ import { OptionGroupsPage } from './admin/OptionGroupsPage';
 import { ProductsPage } from './admin/ProductsPage';
 import { RegistersPage } from './admin/RegistersPage';
 import { SettingsPage } from './admin/SettingsPage';
+import { AuditLogsPage } from './admin/AuditLogsPage';
+import { SalesPage } from './admin/SalesPage';
+import { SettlementsPage } from './admin/SettlementsPage';
 import './admin/admin.css';
 
 type LoginState = { state: 'checking' } | { state: 'out' } | { state: 'in'; employee: EmployeeInfo };
@@ -95,6 +98,8 @@ function AdminLogin({ onLogin }: { onLogin: (res: StaffSessionResponse) => void 
 }
 
 const NAV = [
+  { to: '/admin/sales', label: '売上' },
+  { to: '/admin/settlements', label: 'レジ点検・精算' },
   { to: '/admin/products', label: '商品' },
   { to: '/admin/categories', label: 'カテゴリ' },
   { to: '/admin/option-groups', label: 'オプション' },
@@ -103,6 +108,7 @@ const NAV = [
   { to: '/admin/devices', label: '端末' },
   { to: '/admin/registers', label: 'レジ' },
   { to: '/admin/settings', label: '店舗・運用設定' },
+  { to: '/admin/audit-logs', label: '操作ログ' },
 ] as const;
 
 function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: () => void }) {
@@ -138,7 +144,10 @@ function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: 
         </nav>
         <main className="admin__main">
           <Routes>
-            <Route index element={<Navigate to="/admin/products" replace />} />
+            <Route index element={<Navigate to="/admin/sales" replace />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="settlements" element={<SettlementsPage />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="products" element={<ProductsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="option-groups" element={<OptionGroupsPage />} />
@@ -147,7 +156,7 @@ function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: 
             <Route path="devices" element={<DevicesPage presence={presence} />} />
             <Route path="registers" element={<RegistersPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="*" element={<Navigate to="/admin/products" replace />} />
+            <Route path="*" element={<Navigate to="/admin/sales" replace />} />
           </Routes>
         </main>
       </div>
