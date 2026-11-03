@@ -279,3 +279,18 @@ export interface CsvImportResult {
 export interface CsvImportErrorBody {
   error: { code: 'csv_invalid'; message: string; rows: { row: number; message: string }[] };
 }
+
+/** 端末側（レジ・キッチン・カスタマー・ピックアップ）が使う設定。`GET /api/device-settings` */
+export type DeviceSettings = Pick<
+  StoreSettings,
+  | 'storeName'
+  | 'customerMessage'
+  | 'kitchenWarnSeconds'
+  | 'kitchenAlertSeconds'
+  | 'ticketNumberMin'
+  | 'ticketNumberMax'
+  | 'autoNumberMin'
+  | 'autoNumberMax'
+  | 'taxRounding'
+  | 'handoverUndoSeconds'
+>;

@@ -40,7 +40,8 @@ pnpm モノレポ / TypeScript strict
 ## コマンド（pnpm は corepack 経由）
 - 依存導入: `corepack pnpm install`
 - 開発起動: `corepack pnpm dev`（server :3000 / web :5173）。`.claude/launch.json` に server / web あり
-- テスト: `corepack pnpm test` / 型チェック: `corepack pnpm typecheck`
+- テスト: `corepack pnpm test` / 型チェック: `corepack pnpm typecheck` / E2E: `corepack pnpm test:e2e`（`playwright.config.ts`。Web をビルドし一時 DB でサーバーを :3210 に起動する）
+- ルートの scripts から pnpm を呼ぶときは `corepack pnpm` と書く（この環境では素の `pnpm` が PATH に無い）
 - マイグレーション生成: `corepack pnpm db:generate`（スキーマは `apps/server/src/db/schema.ts`）
 
 ## 実装の約束事
@@ -56,6 +57,16 @@ pnpm モノレポ / TypeScript strict
 - マスタの入力スキーマは `packages/shared/src/masters.ts`。変更したら `catalog.updated` / `settings.updated` を全端末へ送る
 - React Router 8 は `/admin/*` のようなスプラット配下で相対リンクが現在の URL 基準になるので、管理画面のリンクは絶対パスで書く
 
+## 注文フローの実装（フェーズ3）
+- 金額計算は `packages/shared/src/pricing.ts` の `priceOrder` だけを使う（レジ表示とサーバー確定で共通）。状態遷移は `packages/shared/src/orders.ts` の `ORDER_ACTIONS` / `nextStatus`
+- 会計確定は `apps/server/src/modules/checkout/service.ts`。1つの `immediateTransaction` で採番・販売データ・注文を記録する。端末は `expectedTotal`（表示していた合計）を送り、サーバー計算と違えば 409 `total_mismatch`
+- 冪等キーは支払画面を開いたときに端末で1つ作り（`lib/id.ts`）、再試行でも同じキーを送る
+- 採番は `modules/orders/numbering.ts`。自動採番のカウンタは「営業日ごとに振り直す」なら `auto_order:<営業日>`、そうでなければ `auto_order`。レシート番号は `receipt:<営業日>:<レジ番号>`
+- 営業日は `modules/business-day/service.ts` の `currentBusinessDay`（切替時刻より前は前日扱い・サーバーのローカル時刻）。閉店操作はフェーズ6/7で実装する
+- 注文の通知は `order.updated`（`{ order: OrderView, change }`）1種類。端末は `realtime/orderBoard.ts` の `useOrderBoard` で一覧を持ち、`version` が古い通知は捨てる
+- レジの流れ: レジ選択（ログイン前）→ ログイン → 開設 → 会計。店内／持ち帰りは会計ごとに必ず選ばせる（既定値なし）
+- キッチンのカード表示は `kitchenItems()`。オプションのステーションが商品と違えば（セットのドリンク）そのステーション側に親商品名つきで出す
+
 ## デザイン
 - 管理画面は **デジタル庁デザインシステム（DADS, https://design.digital.go.jp/dads/）** に準拠する。スタイルは `apps/web/src/routes/admin/admin.css` に集約し、`.dads` クラスの内側に閉じる（レジ・キッチン等は対象外）
 - 色・文字サイズ・行間・角丸・影は公式トークン `@digital-go-jp/design-tokens`（MIT）の CSS 変数（`--color-key-900`, `--color-neutral-solid-gray-800`, `--font-size-16`, `--border-radius-8` など）を使い、色を直書きしない
@@ -64,4 +75,4 @@ pnpm モノレポ / TypeScript strict
 
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
-- 現在: フェーズ2（マスタ）完了。次はフェーズ3（注文フロー: 会計・採番・キッチン・カスタマー・ピックアップ）
+- 現在: フェーズ3（注文フロー）完了。次はフェーズ4（印刷基盤: 印刷ドライバーとダミードライバーによるレシートのプレビュー・PDF）

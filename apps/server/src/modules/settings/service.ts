@@ -1,5 +1,5 @@
 import { asc, eq } from 'drizzle-orm';
-import type { Register, registerInput, StoreSettings } from '@pos/shared';
+import type { DeviceSettings, Register, registerInput, StoreSettings } from '@pos/shared';
 import type { z } from 'zod';
 import { immediateTransaction, type Db } from '../../db/client.js';
 import { registers, storeSettings } from '../../db/schema.js';
@@ -18,19 +18,6 @@ const toRegister = (r: RegisterRow): Register => ({
   numberingMode: r.numberingMode,
   enabled: r.enabled,
 });
-
-/** 端末側（レジ・キッチン・カスタマー）が使う設定。店舗情報の一部と運用設定 */
-export type DeviceSettings = Pick<
-  StoreSettings,
-  | 'storeName'
-  | 'customerMessage'
-  | 'kitchenWarnSeconds'
-  | 'kitchenAlertSeconds'
-  | 'ticketNumberMin'
-  | 'ticketNumberMax'
-  | 'autoNumberMin'
-  | 'autoNumberMax'
->;
 
 /** 店舗・運用設定（1行）とレジの設定 */
 export class SettingsService {
@@ -56,6 +43,8 @@ export class SettingsService {
       ticketNumberMax: s.ticketNumberMax,
       autoNumberMin: s.autoNumberMin,
       autoNumberMax: s.autoNumberMax,
+      taxRounding: s.taxRounding,
+      handoverUndoSeconds: s.handoverUndoSeconds,
     };
   }
 

@@ -12,6 +12,10 @@ import { EmployeeService } from './modules/employees/service.js';
 import { deviceMasterRoutes, masterAdminRoutes } from './modules/masters/routes.js';
 import { MasterService } from './modules/masters/service.js';
 import { SettingsService } from './modules/settings/service.js';
+import { CheckoutService } from './modules/checkout/service.js';
+import { orderRoutes } from './modules/orders/routes.js';
+import { OrderService } from './modules/orders/service.js';
+import { RegisterService } from './modules/registers/service.js';
 import { RealtimeHub } from './realtime/hub.js';
 
 export interface BuildAppOptions {
@@ -34,10 +38,14 @@ export async function buildApp({ db, logger = false, webDistDir = null }: BuildA
   const masters = new MasterService(db);
   const employees = new EmployeeService(db);
   const settings = new SettingsService(db);
+  const registers = new RegisterService(db);
+  const orders = new OrderService(db);
+  const checkout = new CheckoutService(db, registers);
 
   app.get('/api/system/health', async () => ({ ok: true, bootId: hub.bootId, serverTime: Date.now() }));
   authRoutes(app, auth, guards);
   deviceMasterRoutes(app, { masters, settings, guards });
+  orderRoutes(app, { orders, checkout, registers, hub, guards });
   // 管理 API は管理者ログイン必須のフックを持つので、スコープを分けて登録する
   await app.register(async (scope) => deviceAdminRoutes(scope, db, auth, hub, guards));
   await app.register(async (scope) => masterAdminRoutes(scope, { db, masters, employees, settings, hub, guards }));

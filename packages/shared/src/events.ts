@@ -1,4 +1,5 @@
 import type { DeviceRole } from './domain.js';
+import type { OrderView } from './orders.js';
 
 /**
  * サーバー→端末のイベント。状態変更はすべて REST で行い、WebSocket は通知専用。
@@ -34,7 +35,27 @@ export interface CatalogUpdatedPayload {
   reason: 'categories' | 'products' | 'optionGroups' | 'discounts';
 }
 
+/** 注文に起きたこと。端末はこれで表示を更新し、音を鳴らすかを決める */
+export type OrderChange =
+  | 'created'
+  | 'station_completed'
+  | 'station_reopened'
+  | 'called'
+  | 'recalled'
+  | 'uncalled'
+  | 'handed_over'
+  | 'handover_undone'
+  | 'modified'
+  | 'cancelled';
+
+export interface OrderUpdatedPayload {
+  order: OrderView;
+  change: OrderChange;
+}
+
 export interface ServerToClientEvents {
+  /** 注文の作成・状態変化。受け取った OrderView で置き換える */
+  'order.updated': (e: EventEnvelope<OrderUpdatedPayload>) => void;
   'system.hello': (e: EventEnvelope<HelloPayload>) => void;
   'system.ping': (e: EventEnvelope<PingPayload>) => void;
   'devices.presence': (e: EventEnvelope<PresencePayload>) => void;

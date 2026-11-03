@@ -28,6 +28,7 @@ export async function createTestApp() {
         code: ADMIN.code,
         name: '管理者',
         role: 'admin',
+        canManualDiscount: true,
         pinHash: await hashSecret(ADMIN.pin),
         passwordHash: await hashSecret(ADMIN.password),
       },

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { OptionGroup, Product } from '@pos/shared';
-import { lineUnitPrice, type CartOption } from './cart';
+import type { DiningOption, OptionGroup, Product } from '@pos/shared';
+import { priceFor } from './cart';
 
 const yen = (n: number) => `¥${n.toLocaleString('ja-JP')}`;
 
@@ -18,16 +18,19 @@ function initialSelection(groups: OptionGroup[]) {
 export function OptionPicker({
   product,
   groups,
+  dining,
   onAdd,
   onClose,
 }: {
   product: Product;
   groups: OptionGroup[];
-  onAdd: (options: CartOption[], quantity: number) => void;
+  dining: DiningOption | null;
+  onAdd: (optionIds: number[], quantity: number) => void;
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState(() => initialSelection(groups));
   const [quantity, setQuantity] = useState(1);
+  const base = priceFor(product, dining);
 
   const toggle = (group: OptionGroup, optionId: number) =>
     setSelected((s) => {
@@ -39,20 +42,16 @@ export function OptionPicker({
       };
     });
 
-  const chosen: CartOption[] = groups.flatMap((g) =>
-    g.options
-      .filter((o) => (selected[g.id] ?? []).includes(o.id))
-      .map((o) => ({ groupId: g.id, groupName: g.name, optionId: o.id, name: o.name, priceDelta: o.priceDelta })),
-  );
+  const chosen = groups.flatMap((g) => g.options.filter((o) => (selected[g.id] ?? []).includes(o.id)));
   const missing = groups.filter((g) => g.selection === 'single' && (selected[g.id] ?? []).length === 0);
-  const unit = lineUnitPrice({ basePrice: product.priceEatIn, options: chosen });
+  const unit = base + chosen.reduce((s, o) => s + o.priceDelta, 0);
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal option-picker" role="dialog" aria-modal="true" aria-label={`${product.name}のオプション`}>
         <div className="modal__header">
           <h2>
-            {product.name} <span className="muted">{yen(product.priceEatIn)}</span>
+            {product.name} <span className="muted">{yen(base)}</span>
           </h2>
           <button type="button" className="btn btn--small" onClick={onClose} aria-label="閉じる">
             ✕
@@ -98,7 +97,7 @@ export function OptionPicker({
             type="button"
             className="btn btn--primary btn--large"
             disabled={missing.length > 0}
-            onClick={() => onAdd(chosen, quantity)}
+            onClick={() => onAdd(chosen.map((o) => o.id), quantity)}
           >
             {missing.length > 0 ? `${missing[0]!.name}を選んでください` : `追加 ${yen(unit * quantity)}`}
           </button>

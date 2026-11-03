@@ -1,0 +1,768 @@
+/* 注文フローの画面（レジの会計・キッチン・カスタマー・ピックアップ）。共通の土台は styles.css */
+
+/* ───── レジ（会計） ───── */
+
+.topbar__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+.topbar .topbar__actions .btn {
+  margin-left: 0;
+  background: transparent;
+  color: var(--topbar-text);
+  border-color: #4b5563;
+}
+.link-btn {
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.dining-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dining-toggle button {
+  min-height: 52px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 1.125rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.dining-toggle button.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-text);
+}
+.cart-line {
+  grid-template-areas:
+    'main amount'
+    'qty actions';
+}
+.cart-line__actions {
+  grid-area: actions;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.cart-line__actions .btn {
+  min-height: 44px;
+}
+.cart-line__discount {
+  color: var(--danger);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.cart-line.has-problem {
+  background: #fef2f2;
+}
+.pos__summary {
+  display: grid;
+  gap: 4px;
+}
+.pos__summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+}
+.pos__summary-row--discount {
+  color: var(--danger);
+  font-weight: 600;
+}
+.pos__actions .btn {
+  min-height: 60px;
+}
+.segmented--light {
+  border-color: var(--border);
+}
+.segmented--light button {
+  color: var(--text);
+}
+.segmented--light button.is-active {
+  color: var(--primary-text);
+}
+.manual-discount {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.manual-discount h3 {
+  margin: 0 0 8px;
+}
+
+.payment {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  padding: 12px 16px;
+}
+.payment__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.payment__total {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: 1.25rem;
+}
+.payment__total strong {
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+}
+.payment__body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+}
+.payment__left {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.payment__methods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.payment__methods button {
+  min-height: 72px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 1.5rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.payment__methods button.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-text);
+}
+.payment__field {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+.payment__field strong {
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+}
+.payment__field.is-focused {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px #bfdbfe;
+}
+.payment__quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.payment__quick .btn {
+  min-height: 56px;
+  min-width: 110px;
+}
+.payment__change {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: #ecfdf5;
+  color: var(--ok);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.payment__change strong {
+  font-size: 2.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.payment__change.is-short {
+  background: #fef2f2;
+  color: var(--danger);
+}
+.payment__hint {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+}
+.payment__footer {
+  display: grid;
+  gap: 8px;
+}
+.btn--xl {
+  min-height: 72px;
+  font-size: 1.375rem;
+}
+.paypay {
+  padding: 16px;
+  border: 3px solid #ef4444;
+  border-radius: var(--radius);
+  background: #fff;
+}
+.paypay__amount {
+  margin: 0;
+  text-align: center;
+  font-size: 4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.paypay__steps {
+  margin: 8px 0 0;
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+@media (max-width: 900px) {
+  .payment__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.complete {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+.complete__label {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+.complete__number {
+  margin: 0;
+  font-size: 9rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.complete__note {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.complete__details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 24px;
+  margin: 16px 0;
+  min-width: min(640px, 90vw);
+}
+.complete__details div {
+  display: grid;
+  gap: 2px;
+}
+.complete__details dt {
+  color: var(--muted);
+}
+.complete__details dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.complete__change dd {
+  color: var(--ok);
+  font-size: 2rem;
+}
+
+.register-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.register-choice {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+.register-choice strong {
+  font-size: 1.5rem;
+}
+.register-choice:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.big-amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.summary-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.summary-list div {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bg);
+  font-variant-numeric: tabular-nums;
+}
+.summary-list dd {
+  margin: 0;
+}
+.summary-list .is-diff {
+  color: var(--danger);
+}
+
+/* ───── キッチンモニター ───── */
+
+.kitchen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #111827;
+}
+.kitchen__count {
+  font-weight: 700;
+}
+.kitchen__body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+}
+.kitchen__cards {
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+.kitchen__empty {
+  grid-column: 1 / -1;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  text-align: center;
+  margin-top: 64px;
+}
+.kcard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 0;
+  border-top: 10px solid #22c55e;
+  border-radius: var(--radius);
+  background: #f9fafb;
+  color: #111827;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.kcard--warn {
+  border-top-color: #f59e0b;
+  background: #fffbeb;
+}
+.kcard--alert {
+  border-top-color: #ef4444;
+  background: #fef2f2;
+}
+.kcard:active {
+  transform: scale(0.98);
+}
+.kcard__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.kcard__number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.kcard__dining {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+.kcard__dining--eat_in {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.kcard__dining--take_out {
+  background: #fde68a;
+  color: #92400e;
+}
+.kcard__meta {
+  display: flex;
+  justify-content: space-between;
+  color: #4b5563;
+  font-variant-numeric: tabular-nums;
+}
+.kcard__elapsed {
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+.kcard--alert .kcard__elapsed {
+  color: #b91c1c;
+}
+.kcard__flag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #fbbf24;
+  font-weight: 800;
+  text-align: center;
+}
+.kcard__flag--modified {
+  background: #b91c1c;
+  color: #fff;
+}
+.kcard__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.kcard__items li,
+.pdetail__items li {
+  display: grid;
+  grid-template-columns: 2.2em 1fr;
+  gap: 6px;
+}
+.kcard__qty {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.8em;
+  height: 1.8em;
+  border-radius: 6px;
+  background: #111827;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.kcard__options {
+  display: block;
+  color: #4b5563;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.kcard__parent {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.kcard__stations {
+  display: flex;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.kcard__stations .is-done {
+  color: var(--ok);
+  font-weight: 700;
+}
+.kcard__tap {
+  margin-top: auto;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.kitchen__history {
+  overflow-y: auto;
+  padding: 12px;
+  background: #1f2937;
+  color: #f9fafb;
+}
+.kitchen__history h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.kitchen__history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.kitchen__history li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #374151;
+}
+.kitchen__history .muted {
+  color: #9ca3af;
+}
+.kitchen__history-number {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───── カスタマーモニター ───── */
+
+.customer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.customer__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 12px 24px;
+  padding-right: 200px;
+  background: #1e293b;
+}
+.customer__store {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+.customer__message {
+  font-size: 1.25rem;
+  color: #cbd5e1;
+}
+.customer__areas {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+}
+.customer__area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.customer__numbers {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  gap: 16px 24px;
+}
+.cnum {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.cnum--preparing {
+  color: #cbd5e1;
+}
+.customer__area--preparing .is-large .cnum {
+  font-size: 4.5rem;
+}
+.customer__area--preparing .is-medium .cnum {
+  font-size: 3.25rem;
+}
+.customer__area--preparing .is-small .cnum {
+  font-size: 2.5rem;
+}
+.cnum--calling {
+  padding: 4px 20px;
+  border-radius: 16px;
+  background: #fbbf24;
+  color: #0f172a;
+}
+.customer__area--calling .is-large .cnum {
+  font-size: 9rem;
+}
+.customer__area--calling .is-medium .cnum {
+  font-size: 6rem;
+}
+.customer__area--calling .is-small .cnum {
+  font-size: 4.5rem;
+}
+.cnum--calling.is-new {
+  animation: call-flash 1s ease-in-out infinite;
+}
+@keyframes call-flash {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(251 191 36 / 0.8);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 24px rgb(251 191 36 / 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cnum--calling.is-new {
+    animation: none;
+    outline: 8px solid #fff;
+  }
+}
+.customer__page {
+  margin: 0;
+  text-align: center;
+  color: #94a3b8;
+}
+
+/* ───── ピックアップ端末 ───── */
+
+.pickup {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pickup__body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+.pickup__list {
+  overflow-y: auto;
+  padding: 12px;
+}
+.pickup__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.ptile {
+  display: grid;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.ptile__number {
+  font-size: 2.25rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.ptile__status {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+.ptile.is-ready {
+  border-color: var(--ok);
+  background: #dcfce7;
+}
+.ptile.is-ready .ptile__status {
+  color: var(--ok);
+}
+.ptile.is-calling {
+  border-color: #f59e0b;
+  background: #fef3c7;
+}
+.ptile.is-calling .ptile__status {
+  color: #92400e;
+}
+.ptile.is-selected {
+  outline: 4px solid var(--primary);
+  outline-offset: 2px;
+}
+.pickup__recent {
+  margin-top: 16px;
+}
+.pickup__recent h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+.pickup__side {
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+.pickup__keypad {
+  display: grid;
+  gap: 12px;
+}
+.pdetail {
+  display: grid;
+  gap: 12px;
+}
+.pdetail__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.pdetail__number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.pdetail__status {
+  font-weight: 800;
+  font-size: 1.125rem;
+}
+.pdetail__status--calling {
+  color: #b45309;
+}
+.pdetail__items {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  display: grid;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.pdetail__actions {
+  display: grid;
+  gap: 8px;
+}
+/* iPhone の幅: 操作パネルを上、一覧を下に */
+@media (max-width: 760px) {
+  .pickup__body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .pickup__side {
+    order: -1;
+    border-left: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pickup__grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+  .ptile__number {
+    font-size: 1.75rem;
+  }
+  .screen--pickup .topbar {
+    padding-right: 150px;
+  }
+}

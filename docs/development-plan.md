@@ -148,6 +148,17 @@
 - 管理画面の**閉店操作**で営業日を終了する（全レジ閉設済みであることを確認）。閉店時に DB バックアップ、自動採番のリセット（100へ）を行う。
 - 閉店操作を忘れた場合は、営業日切替時刻に同じ処理を自動実行する。
 
+### フェーズ3で確定した実装（上の案からの変更点を含む）
+- **実際の API**（フェーズ1〜3）
+  - レジ: `GET /api/register/registers`（レジ選択。ログイン前に端末認証だけで取れる）、`POST /api/register/sessions`（開設）、`GET /api/register/sessions/:id`（集計）、`POST /api/register/sessions/:id/close`（閉設）
+  - 会計: `POST /api/transactions`。`POST /transactions/quote` は作らず、レジは共有パッケージの `priceOrder` で表示を計算し、確定時に `expectedTotal`（表示していた合計）を送る。サーバーの再計算と違えば 409 で確定しない
+  - 注文: `GET /api/orders/board`（未完了＋直近12時間の受け渡し済み・取消を最大30件）、`POST /api/orders/:id/stations/:all|food|drink/complete|reopen`（キッチン端末のみ）、`POST /api/orders/:id/call|recall|uncall|handover|undo-handover`（ピックアップ端末のみ）
+- **通知**: 注文は `order.updated`（`{ order, change }`）の1種類にまとめた。`change` は created / station_completed / station_reopened / called / recalled / uncalled / handed_over / handover_undone（フェーズ5で modified / cancelled を追加）。端末は `version` が手元より古い通知を捨てる
+- **レジの流れ**: 要件3.1どおり、起動時にレジ番号を選んでからログインする。同じ端末で開設中のレジがあれば自動で再開する。店内／持ち帰りは会計ごとに必ず選ばせ、既定値を置かない（税率を取り違えないため）
+- **採番**: 自動採番は前回の次の番号から、未完了の注文で使用中の番号を飛ばして採る。全番号が使用中なら 409。番号札は範囲内かつ未使用のみ受け付ける。レシート番号は `YYYYMMDD-レジ番号-4桁連番`
+- **キッチン**: カードは1回のタップで完了（確認ダイアログなし）。誤操作は「直近に完了」から戻す。注文の状態（受付済み/呼び出し中）とステーションの完了は別に持つ
+- **営業日**: 会計・開設のたびに、切替時刻で決まる営業日の行が無ければ作る。閉店操作（フェーズ6/7）を実装するまでは営業日が閉じられることはない
+
 ---
 
 ## 5. 計算ルール（案・テストで固定する）
