@@ -29,10 +29,18 @@ export interface PresencePayload {
   onlineDeviceIds: number[];
 }
 
+/** 商品・カテゴリ・オプション・割引のどれかが変わった。レジはカタログを取り直す */
+export interface CatalogUpdatedPayload {
+  reason: 'categories' | 'products' | 'optionGroups' | 'discounts';
+}
+
 export interface ServerToClientEvents {
   'system.hello': (e: EventEnvelope<HelloPayload>) => void;
   'system.ping': (e: EventEnvelope<PingPayload>) => void;
   'devices.presence': (e: EventEnvelope<PresencePayload>) => void;
+  'catalog.updated': (e: EventEnvelope<CatalogUpdatedPayload>) => void;
+  /** 店舗・運用設定が変わった。各端末は必要な設定を取り直す */
+  'settings.updated': (e: EventEnvelope<Record<string, never>>) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

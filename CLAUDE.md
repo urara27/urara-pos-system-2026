@@ -51,7 +51,11 @@ pnpm モノレポ / TypeScript strict
 - 設定変更・端末操作などは `writeAudit()` で操作ログに残す
 - 新しいリアルタイムイベントは `packages/shared/src/events.ts` に型を足し、`hub.emit()` で送る。端末側は `useDeviceRealtime({ onSync, handlers })` で受け、`onSync` で全状態を取り直す
 - better-sqlite3 は v12 系に固定（v13 は Windows + Node 24 のビルド済みバイナリが無い）
+- マスタ（商品・カテゴリ・オプション・割引・従業員・レジ）は物理削除しない。削除 API は作らず「無効」で管理する。オプションの既存選択肢を更新で省くとエラー
+- カテゴリ名・オプショングループ名は一意（商品 CSV で名前から引くため）
+- マスタの入力スキーマは `packages/shared/src/masters.ts`。変更したら `catalog.updated` / `settings.updated` を全端末へ送る
+- React Router 8 は `/admin/*` のようなスプラット配下で相対リンクが現在の URL 基準になるので、管理画面のリンクは絶対パスで書く
 
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
-- 現在: フェーズ1（基盤）完了。次はフェーズ2（マスタ管理）
+- 現在: フェーズ2（マスタ）完了。次はフェーズ3（注文フロー: 会計・採番・キッチン・カスタマー・ピックアップ）

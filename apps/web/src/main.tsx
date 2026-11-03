@@ -28,7 +28,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/kitchen" element={<DeviceGate role="kitchen"><KitchenPage /></DeviceGate>} />
         <Route path="/customer" element={<DeviceGate role="customer"><CustomerPage /></DeviceGate>} />
         <Route path="/pickup" element={<DeviceGate role="pickup"><PickupPage /></DeviceGate>} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/*" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

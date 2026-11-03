@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import {
-  DEVICE_ROLE_LABELS,
-  DEVICE_ROLES,
-  type AdminDeviceRow,
-  type DeviceRole,
-  type EmployeeInfo,
-  type PairingCodeResponse,
-  type StaffSessionResponse,
-} from '@pos/shared';
+import { useEffect, useState, type FormEvent } from 'react';
+import { NavLink, Navigate, Route, Routes } from 'react-router';
+import type { EmployeeInfo, StaffSessionResponse } from '@pos/shared';
 import { ConnectionBadge, OfflineBanner } from '../components/ConnectionBadge';
 import { Toast, useToast } from '../components/Toast';
 import { api, ApiError } from '../lib/api';
 import { keys, session } from '../lib/storage';
 import { useRealtime } from '../realtime/connection';
+import { CategoriesPage } from './admin/CategoriesPage';
+import { DevicesPage, useDevicePresence } from './admin/DevicesPage';
+import { DiscountsPage } from './admin/DiscountsPage';
+import { EmployeesPage } from './admin/EmployeesPage';
+import { OptionGroupsPage } from './admin/OptionGroupsPage';
+import { ProductsPage } from './admin/ProductsPage';
+import { RegistersPage } from './admin/RegistersPage';
+import { SettingsPage } from './admin/SettingsPage';
 
 type LoginState = { state: 'checking' } | { state: 'out' } | { state: 'in'; employee: EmployeeInfo };
 
@@ -49,7 +50,7 @@ export function AdminPage() {
       />
     );
   }
-  return <AdminDashboard employee={login.employee} onLogout={logout} />;
+  return <AdminShell employee={login.employee} onLogout={logout} />;
 }
 
 function AdminLogin({ onLogin }: { onLogin: (res: StaffSessionResponse) => void }) {
@@ -92,30 +93,26 @@ function AdminLogin({ onLogin }: { onLogin: (res: StaffSessionResponse) => void 
   );
 }
 
-function AdminDashboard({ employee, onLogout }: { employee: EmployeeInfo; onLogout: () => void }) {
-  const [devices, setDevices] = useState<AdminDeviceRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const showToast = useToast((s) => s.show);
+const NAV = [
+  { to: '/admin/products', label: '商品' },
+  { to: '/admin/categories', label: 'カテゴリ' },
+  { to: '/admin/option-groups', label: 'オプション' },
+  { to: '/admin/discounts', label: '割引・クーポン' },
+  { to: '/admin/employees', label: '従業員' },
+  { to: '/admin/devices', label: '端末' },
+  { to: '/admin/registers', label: 'レジ' },
+  { to: '/admin/settings', label: '店舗・運用設定' },
+] as const;
 
-  const reload = useCallback(() => {
-    api<{ devices: AdminDeviceRow[] }>('/api/admin/devices', { auth: 'admin' })
-      .then((res) => setDevices(res.devices))
-      .catch((err: unknown) => setError(err instanceof ApiError ? err.message : '読み込みに失敗しました'));
-  }, []);
+function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: () => void }) {
+  const showToast = useToast((s) => s.show);
+  const presence = useDevicePresence();
 
   useRealtime({
     auth: { adminSession: session.get(keys.adminSession) ?? '' },
-    onSync: reload,
+    onSync: presence.reload,
     handlers: {
-      'devices.presence': (e) => {
-        // 新しく登録された端末が現れたら一覧ごと取り直す
-        if (e.payload.onlineDeviceIds.some((id) => !devices.some((d) => d.id === id))) {
-          reload();
-          return;
-        }
-        const online = new Set(e.payload.onlineDeviceIds);
-        setDevices((prev) => prev.map((d) => ({ ...d, online: online.has(d.id) })));
-      },
+      'devices.presence': presence.onPresence,
       'system.ping': (e) => showToast(`📣 ${e.payload.from}: ${e.payload.message}`),
     },
   });
@@ -130,135 +127,31 @@ function AdminDashboard({ employee, onLogout }: { employee: EmployeeInfo; onLogo
           ログアウト
         </button>
       </header>
-      <main className="admin__main">
-        {error && <p className="error">{error}</p>}
-        <PairingCodeIssuer />
-        <DeviceList devices={devices} onChanged={reload} />
-        <PingSender />
-        <p className="muted small">商品・従業員などのマスタ管理はフェーズ2で実装します。</p>
-      </main>
+      <div className="admin__body">
+        <nav className="admin__nav">
+          {NAV.map((n) => (
+            <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'is-active' : '')}>
+              {n.label}
+            </NavLink>
+          ))}
+        </nav>
+        <main className="admin__main">
+          <Routes>
+            <Route index element={<Navigate to="/admin/products" replace />} />
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
+            <Route path="option-groups" element={<OptionGroupsPage />} />
+            <Route path="discounts" element={<DiscountsPage />} />
+            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="devices" element={<DevicesPage presence={presence} />} />
+            <Route path="registers" element={<RegistersPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/admin/products" replace />} />
+          </Routes>
+        </main>
+      </div>
       <ConnectionBadge />
       <Toast />
     </div>
-  );
-}
-
-function PairingCodeIssuer() {
-  const [role, setRole] = useState<DeviceRole>('register');
-  const [issued, setIssued] = useState<PairingCodeResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const issue = async () => {
-    setError(null);
-    try {
-      setIssued(
-        await api<PairingCodeResponse>('/api/admin/pairing-codes', { method: 'POST', body: { role }, auth: 'admin' }),
-      );
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : '発行に失敗しました');
-    }
-  };
-
-  return (
-    <section className="card">
-      <h2>端末の登録</h2>
-      <p className="muted">
-        役割を選んでペアリングコードを発行し、登録する端末で <code>/pairing</code> を開いて入力します（有効期限10分）。
-      </p>
-      <div className="row">
-        <select value={role} onChange={(e) => setRole(e.target.value as DeviceRole)}>
-          {DEVICE_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {DEVICE_ROLE_LABELS[r]}
-            </option>
-          ))}
-        </select>
-        <button className="btn btn--primary" onClick={issue}>
-          ペアリングコードを発行
-        </button>
-      </div>
-      {error && <p className="error">{error}</p>}
-      {issued && (
-        <p className="pairing-code">
-          <span className="pairing-code__value">{issued.code}</span>
-          <span className="muted">
-            {DEVICE_ROLE_LABELS[issued.role]}用 / {new Date(issued.expiresAt).toLocaleTimeString('ja-JP')} まで有効
-          </span>
-        </p>
-      )}
-    </section>
-  );
-}
-
-function DeviceList({ devices, onChanged }: { devices: AdminDeviceRow[]; onChanged: () => void }) {
-  const toggle = async (device: AdminDeviceRow) => {
-    const action = device.enabled ? '無効化' : '有効化';
-    if (!window.confirm(`「${device.name}」を${action}しますか？`)) return;
-    await api(`/api/admin/devices/${device.id}`, {
-      method: 'PATCH',
-      body: { enabled: !device.enabled },
-      auth: 'admin',
-    }).catch(() => undefined);
-    onChanged();
-  };
-
-  return (
-    <section className="card">
-      <h2>登録済みの端末</h2>
-      {devices.length === 0 ? (
-        <p className="muted">まだ端末が登録されていません。</p>
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>端末名</th>
-              <th>役割</th>
-              <th>接続</th>
-              <th>最終接続</th>
-              <th>状態</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {devices.map((d) => (
-              <tr key={d.id} className={d.enabled ? '' : 'is-disabled'}>
-                <td>{d.name}</td>
-                <td>{DEVICE_ROLE_LABELS[d.role]}</td>
-                <td>
-                  <span className={`dot ${d.online ? 'dot--on' : 'dot--off'}`} />
-                  {d.online ? 'オンライン' : 'オフライン'}
-                </td>
-                <td>{d.lastSeenAt ? new Date(d.lastSeenAt).toLocaleString('ja-JP') : '—'}</td>
-                <td>{d.enabled ? '有効' : '無効'}</td>
-                <td>
-                  <button className="btn btn--small" onClick={() => toggle(d)}>
-                    {d.enabled ? '無効化' : '有効化'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </section>
-  );
-}
-
-/** リアルタイム配信の疎通確認用。全端末にトーストを出す */
-function PingSender() {
-  const [message, setMessage] = useState('テスト通知です');
-  const send = async () => {
-    await api('/api/admin/broadcast-ping', { method: 'POST', body: { message }, auth: 'admin' }).catch(() => undefined);
-  };
-  return (
-    <section className="card">
-      <h2>通信テスト</h2>
-      <div className="row">
-        <input value={message} maxLength={100} onChange={(e) => setMessage(e.target.value)} />
-        <button className="btn" onClick={send} disabled={!message.trim()}>
-          全端末に送信
-        </button>
-      </div>
-    </section>
   );
 }

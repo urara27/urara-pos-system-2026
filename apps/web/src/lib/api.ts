@@ -6,6 +6,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    /** エラー本文のその他の項目（CSV の行ごとのエラーなど） */
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -40,7 +42,12 @@ export async function api<T>(path: string, { method = 'GET', body, auth = 'none'
   const data: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const err = (data as ApiErrorBody | null)?.error;
-    throw new ApiError(res.status, err?.code ?? 'unknown', err?.message ?? `エラーが発生しました (${res.status})`);
+    throw new ApiError(
+      res.status,
+      err?.code ?? 'unknown',
+      err?.message ?? `エラーが発生しました (${res.status})`,
+      err as Record<string, unknown> | undefined,
+    );
   }
   return data as T;
 }

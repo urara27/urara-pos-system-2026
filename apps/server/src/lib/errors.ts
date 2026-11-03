@@ -7,6 +7,8 @@ export class AppError extends Error {
     readonly statusCode: number,
     readonly code: string,
     message: string,
+    /** エラー本文に追加で載せる情報（CSV の行ごとのエラーなど） */
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -32,7 +34,7 @@ export function registerErrorHandler(app: FastifyInstance) {
     let body: ApiErrorBody = { error: { code: 'internal', message: 'サーバーエラーが発生しました' } };
     if (err instanceof AppError) {
       status = err.statusCode;
-      body = { error: { code: err.code, message: err.message } };
+      body = { error: { ...err.details, code: err.code, message: err.message } };
     } else if (err instanceof ZodError) {
       status = 400;
       body = { error: { code: 'invalid_request', message: err.issues[0]?.message ?? '入力が不正です' } };

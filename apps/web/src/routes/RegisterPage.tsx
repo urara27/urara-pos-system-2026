@@ -4,16 +4,19 @@ import { useDevice, useDeviceRealtime } from '../components/DeviceGate';
 import { Keypad } from '../components/Keypad';
 import { api, ApiError } from '../lib/api';
 import { keys, session } from '../lib/storage';
+import { CatalogView, useCatalog } from './register/CatalogView';
 
 type LoginState = { state: 'checking' } | { state: 'out' } | { state: 'in'; employee: EmployeeInfo };
 
-/** レジ。フェーズ1では従業員ログインまで。会計はフェーズ3で実装する */
+/** レジ。従業員ログイン → 商品選択。会計（税・割引・支払・採番）はフェーズ3で実装する */
 export function RegisterPage() {
   const device = useDevice();
   const [login, setLogin] = useState<LoginState>(() =>
     session.get(keys.staffSession) ? { state: 'checking' } : { state: 'out' },
   );
-  useDeviceRealtime();
+  const catalog = useCatalog();
+  // 管理画面で商品が変わったら、その場でボタンに反映する
+  useDeviceRealtime({ onSync: catalog.reload, handlers: { 'catalog.updated': catalog.reload } });
 
   useEffect(() => {
     if (login.state !== 'checking') return;
@@ -55,10 +58,7 @@ export function RegisterPage() {
           ログアウト
         </button>
       </header>
-      <section className="placeholder">
-        <h2>レジ</h2>
-        <p>レジの開設・商品選択・会計はフェーズ3で実装します。</p>
-      </section>
+      <CatalogView catalog={catalog.catalog} error={catalog.error} />
     </div>
   );
 }
