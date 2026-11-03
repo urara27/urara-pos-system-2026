@@ -75,6 +75,16 @@ pnpm モノレポ / TypeScript strict
 - PDF のフォントは `@expo-google-fonts/noto-sans-jp` の TTF（Regular/Bold）。pdfkit がサブセットを埋め込む
 - 再発行は `POST /api/transactions/:id/reprint`（操作ログ `receipt.reprinted`）。参照は `requireStaffOrAdmin`（レジのログインか管理者）
 
+## 返金・変更（フェーズ5）
+- `modules/refunds/service.ts`。返金・変更は販売（kind=sale）にだけ行い、元の販売に紐付く新しい取引（kind=refund / exchange, `original_transaction_id`）を作る。元の取引は変更しない
+- 返品の明細は金額をマイナス・数量は正で記録し、`original_line_id` で元の明細を指す。商品変更で追加した明細は正の金額・`original_line_id` なしで変更の取引に入り、以後の返金対象にもなる
+- 金額・税額は `packages/shared/src/refund.ts`（`proportionalShare` / `returnedLineAmount` / `refundTaxes`）。累積の按分なので分けて返金しても合計が一致し、全額返金では元の税額をそのまま戻す。端末は `refund-quote` で試算し、確定時に `expectedDifference` を送る
+- 責任者 PIN は確定のたびに検証する（role が manager / admin）。失敗回数で一時拒否。理由は必須
+- 返金の取引は返金したレジの開設中セッション・当日の営業日に入る（在高・売上はこれで自動的に反映される）
+- 注文への反映: 未完了の注文は、全額返金なら cancelled、それ以外は `modified_at` を付けてステーションを決め直す（追加したステーションは未完了に戻す）。`loadOrderViews` は返品した数量を引き、追加した明細を足して返す。受け渡し済みは変えない
+- 通知は `order.updated` の change = cancelled / modified。キッチンはトーストと通知音で知らせる
+- 検索は `GET /api/transactions`。レシート番号・日時を指定しなければ当日の営業日に絞る
+
 ## デザイン
 - 管理画面は **デジタル庁デザインシステム（DADS, https://design.digital.go.jp/dads/）** に準拠する。スタイルは `apps/web/src/routes/admin/admin.css` に集約し、`.dads` クラスの内側に閉じる（レジ・キッチン等は対象外）
 - 色・文字サイズ・行間・角丸・影は公式トークン `@digital-go-jp/design-tokens`（MIT）の CSS 変数（`--color-key-900`, `--color-neutral-solid-gray-800`, `--font-size-16`, `--border-radius-8` など）を使い、色を直書きしない
@@ -83,4 +93,4 @@ pnpm モノレポ / TypeScript strict
 
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
-- 現在: フェーズ4（印刷基盤）完了。次はフェーズ5（返金・変更: 取引検索、全額・一部返金、商品変更、責任者PIN）
+- 現在: フェーズ5（返金・変更）完了。次はフェーズ6（売上・精算: 売上確認、レジ点検・精算、CSV出力、操作ログ）

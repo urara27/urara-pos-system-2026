@@ -53,12 +53,21 @@ export function loadOrderViews(tx: Db, orderIds: number[]): OrderView[] {
     .all();
   const stations = tx.select().from(orderStationStatus).where(inArray(orderStationStatus.orderId, orderIds)).all();
   const txIds = rows.map((r) => r.order.transactionId);
+  // 返金・商品変更の取引（元の販売に紐付く）も読み、返品した数量を引き、追加した商品を加える
+  const related = tx
+    .select({ id: transactions.id, originalId: transactions.originalTransactionId })
+    .from(transactions)
+    .where(inArray(transactions.originalTransactionId, txIds))
+    .all();
+  const saleOf = new Map<number, number>([...txIds.map((id) => [id, id] as const), ...related.map((r) => [r.id, r.originalId!] as const)]);
   const lines = tx
     .select()
     .from(transactionLines)
-    .where(inArray(transactionLines.transactionId, txIds))
-    .orderBy(asc(transactionLines.lineNo))
+    .where(inArray(transactionLines.transactionId, [...saleOf.keys()]))
+    .orderBy(asc(transactionLines.transactionId), asc(transactionLines.lineNo))
     .all();
+  const returnedQty = new Map<number, number>();
+  for (const l of lines) if (l.originalLineId !== null) returnedQty.set(l.originalLineId, (returnedQty.get(l.originalLineId) ?? 0) + l.quantity);
   const lineOptions =
     lines.length === 0
       ? []
@@ -95,17 +104,18 @@ export function loadOrderViews(tx: Db, orderIds: number[]): OrderView[] {
         receiptNumber,
         stations: { food: st('food'), drink: st('drink') },
         items: lines
-          .filter((l) => l.transactionId === o.transactionId)
+          .filter((l) => saleOf.get(l.transactionId) === o.transactionId && l.originalLineId === null && l.netAmount >= 0)
           .map((l) => ({
             lineId: l.id,
             name: l.productName,
             kitchenName: l.kitchenName,
-            quantity: l.quantity,
+            quantity: l.quantity - (returnedQty.get(l.id) ?? 0),
             station: l.station,
             options: lineOptions
               .filter((x) => x.lineId === l.id)
               .map((x) => ({ name: x.optionName, kitchenName: x.kitchenName, station: x.station, priceDelta: x.priceDelta })),
-          })),
+          }))
+          .filter((item) => item.quantity > 0),
       };
       return [o.id, view] as const;
     }),

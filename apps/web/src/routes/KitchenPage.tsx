@@ -72,8 +72,18 @@ export function KitchenPage() {
     },
     handlers: {
       'order.updated': (e) => {
-        apply(e.payload.order);
-        if (e.payload.change === 'created' && relevantFor(e.payload.order, view)) playNotify();
+        const { order, change } = e.payload;
+        apply(order);
+        if (change === 'created' && relevantFor(order, view)) playNotify();
+        // 変更・取消は目立つように知らせる（カードには「変更あり」が付き、取消はカードが消える）
+        if ((change === 'cancelled' || change === 'modified') && relevantFor(order, view)) {
+          playNotify();
+          showToast(
+            change === 'cancelled'
+              ? `⚠ 注文 ${formatOrderNumber(order.orderNumber)} は取消になりました`
+              : `⚠ 注文 ${formatOrderNumber(order.orderNumber)} の内容が変更されました`,
+          );
+        }
       },
       'settings.updated': reloadSettings,
     },

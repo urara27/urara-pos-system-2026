@@ -13,6 +13,7 @@ import { RegisterPage } from './routes/RegisterPage';
 import './styles.css';
 import './screens.css';
 import './receipt.css';
+import './history.css';
 
 /** `/` は登録済みならその端末の画面へ、未登録ならペアリング画面へ */
 function Home() {

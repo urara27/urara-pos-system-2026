@@ -1,29 +1,14 @@
 import fs from 'node:fs/promises';
-import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
-import { E2E_ADMIN } from '../playwright.config';
+import { expect, test } from '@playwright/test';
+import { adminApi, openRegister, pairDevice, type AdminPost } from './helpers';
 
 /**
  * フェーズ3の完了条件: 1件の注文がレジから受け渡し済みまで通しで流れる。
  * レジ・キッチン・カスタマーモニター・ピックアップを別々のブラウザコンテキスト（＝別端末）で動かす。
  */
 
-async function adminApi(request: APIRequestContext) {
-  const login = await request.post('/api/admin/login', { data: { code: E2E_ADMIN.code, password: E2E_ADMIN.password } });
-  expect(login.ok()).toBeTruthy();
-  const { token } = (await login.json()) as { token: string };
-  const headers = { 'x-staff-session': token };
-  return async <T>(url: string, data: object, method: 'post' | 'put' = 'post'): Promise<T> => {
-    const res = await request[method](url, { headers, data });
-    expect(res.ok(), `${url}: ${await res.text()}`).toBeTruthy();
-    return (await res.json()) as T;
-  };
-}
-
-async function setStoreInfo(request: APIRequestContext, post: Awaited<ReturnType<typeof adminApi>>) {
-  const login = await request.post('/api/admin/login', { data: { code: E2E_ADMIN.code, password: E2E_ADMIN.password } });
-  const { token } = (await login.json()) as { token: string };
-  const current = await request.get('/api/admin/settings', { headers: { 'x-staff-session': token } });
-  const { settings } = (await current.json()) as { settings: Record<string, unknown> };
+async function setStoreInfo(post: AdminPost & { get: <T>(url: string) => Promise<T> }) {
+  const { settings } = await post.get<{ settings: Record<string, unknown> }>('/api/admin/settings');
   await post(
     '/api/admin/settings',
     { ...settings, storeName: 'E2E食堂', invoiceRegistrationNumber: 'T1234567890123', receiptFooter: 'ありがとうございました' },
@@ -31,30 +16,10 @@ async function setStoreInfo(request: APIRequestContext, post: Awaited<ReturnType
   );
 }
 
-/** 管理画面で発行したコードを、その端末の /pairing 画面で入力して登録する */
-async function pairDevice(browser: Browser, post: Awaited<ReturnType<typeof adminApi>>, role: string, name: string) {
-  const { code } = await post<{ code: string }>('/api/admin/pairing-codes', { role });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto('/pairing');
-  await page.getByLabel('ペアリングコード').fill(code);
-  await page.getByLabel(/端末名/).fill(name);
-  await page.getByRole('button', { name: '登録する' }).click();
-  await expect(page).toHaveURL(new RegExp(`/${role}$`));
-  await expect(page.getByRole('status').filter({ hasText: 'オンライン' })).toBeVisible();
-  return page;
-}
-
-/** テンキーで数字を入力する */
-async function typeKeypad(page: Page, digits: string) {
-  const keypad = page.locator('.keypad').first();
-  for (const d of digits) await keypad.getByRole('button', { name: d, exact: true }).click();
-}
-
 test('レジで会計した注文が、キッチン・カスタマーモニター・ピックアップを通って受け渡し済みになる', async ({ browser, request }) => {
   // ── マスタ: セット商品（フード）+ セットドリンク（ドリンク） ──
   const post = await adminApi(request);
-  await setStoreInfo(request, post);
+  await setStoreInfo(post);
   const category = await post<{ id: number }>('/api/admin/categories', { name: 'バーガー' });
   const setDrink = await post<{ id: number }>('/api/admin/option-groups', {
     name: 'セットドリンク',
@@ -84,14 +49,7 @@ test('レジで会計した注文が、キッチン・カスタマーモニタ�
   const calling = customer.locator('.customer__area--calling');
 
   // ── レジ: レジ選択 → ログイン → 開設 ──
-  await register.getByRole('button', { name: /レジ1/ }).click();
-  await typeKeypad(register, E2E_ADMIN.code);
-  await register.getByRole('button', { name: '次へ' }).click();
-  await typeKeypad(register, E2E_ADMIN.pin);
-  await register.getByRole('button', { name: 'ログイン' }).click();
-  await expect(register.getByRole('heading', { name: 'レジ1を開設' })).toBeVisible();
-  await typeKeypad(register, '10000');
-  await register.getByRole('button', { name: '開設する' }).click();
+  await openRegister(register, 'レジ1');
 
   // ── レジ: 商品選択（オプションは既定のコーラ）→ 店内 → 現金ちょうど ──
   await register.getByRole('button', { name: /チーズバーガーセット/ }).click();

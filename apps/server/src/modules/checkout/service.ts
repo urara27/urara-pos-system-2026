@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import {
   isDiscountActive,
   priceOrder,
@@ -12,15 +12,10 @@ import {
 import type { z } from 'zod';
 import { immediateTransaction, type Db } from '../../db/client.js';
 import {
-  categories,
   discounts,
-  optionGroups,
-  options,
   orderEvents,
   orders,
   orderStationStatus,
-  productOptionGroups,
-  products,
   registers,
   storeSettings,
   transactionDiscounts,
@@ -30,6 +25,7 @@ import {
   transactionTaxSummaries,
 } from '../../db/schema.js';
 import { AppError, forbidden } from '../../lib/errors.js';
+import { invalidOrder as invalid, resolveLines } from './resolve-lines.js';
 import { writeAudit } from '../audit/service.js';
 import { currentBusinessDay } from '../business-day/service.js';
 import { issueAutoNumber, issueReceiptNumber, validateTicketNumber } from '../orders/numbering.js';
@@ -42,8 +38,6 @@ interface ResolvedDiscount extends DiscountRule {
   name: string;
   manual: boolean;
 }
-
-const invalid = (message: string) => new AppError(400, 'invalid_order', message);
 
 /**
  * 会計確定。注文・販売データ・注文番号・レシート番号を1つのトランザクションで記録する。
@@ -72,59 +66,10 @@ export class CheckoutService {
       const day = currentBusinessDay(tx, now);
 
       // ── 明細をマスタで検証・解決する ──
-      const productIds = [...new Set(data.lines.map((l) => l.productId))];
-      const productRows = tx
-        .select({ product: products, categoryName: categories.name, categoryEnabled: categories.enabled })
-        .from(products)
-        .innerJoin(categories, eq(categories.id, products.categoryId))
-        .where(inArray(products.id, productIds))
-        .all();
-      const links = tx
-        .select()
-        .from(productOptionGroups)
-        .where(inArray(productOptionGroups.productId, productIds))
-        .all();
-      const groupIds = [...new Set(links.map((l) => l.groupId))];
-      const groupRows = groupIds.length ? tx.select().from(optionGroups).where(inArray(optionGroups.id, groupIds)).all() : [];
-      const optionRows = groupIds.length
-        ? tx.select().from(options).where(inArray(options.groupId, groupIds)).orderBy(asc(options.sortOrder), asc(options.id)).all()
-        : [];
-
-      const resolvedLines = data.lines.map((line) => {
-        const row = productRows.find((r) => r.product.id === line.productId);
-        if (!row || !row.product.enabled || !row.categoryEnabled) throw invalid('販売していない商品が含まれています');
-        const p = row.product;
-        if (p.soldOut) throw invalid(`「${p.name}」は売切です`);
-
-        const myGroups = links
-          .filter((l) => l.productId === p.id)
-          .map((l) => groupRows.find((g) => g.id === l.groupId)!)
-          .filter((g) => g.enabled);
-        if (new Set(line.optionIds).size !== line.optionIds.length) throw invalid('同じオプションが重複しています');
-        const chosen = line.optionIds.map((id) => {
-          const o = optionRows.find((x) => x.id === id);
-          const g = o && myGroups.find((x) => x.id === o.groupId);
-          if (!o || !g || !o.enabled) throw invalid(`「${p.name}」に選べないオプションが含まれています`);
-          if (o.soldOut) throw invalid(`オプション「${o.name}」は売切です`);
-          return { option: o, group: g };
-        });
-        for (const g of myGroups.filter((x) => x.selection === 'single')) {
-          const n = chosen.filter((c) => c.group.id === g.id).length;
-          // 有効な選択肢が無いグループはレジにも出ないので必須にしない
-          const selectable = optionRows.some((o) => o.groupId === g.id && o.enabled);
-          if (selectable && n !== 1) throw invalid(`「${p.name}」の「${g.name}」を1つ選んでください`);
-        }
-
-        const unitPrice = data.diningOption === 'take_out' && p.priceTakeOut !== null ? p.priceTakeOut : p.priceEatIn;
-        return {
-          product: p,
-          categoryName: row.categoryName,
-          chosen,
-          unitPrice,
-          quantity: line.quantity,
-          discounts: line.discounts.map((d) => this.resolveDiscount(tx, d, 'line', ctx.employee, now)),
-        };
-      });
+      const resolvedLines = resolveLines(tx, data.lines, data.diningOption).map((l, i) => ({
+        ...l,
+        discounts: data.lines[i]!.discounts.map((d) => this.resolveDiscount(tx, d, 'line', ctx.employee, now)),
+      }));
       const orderDiscounts = data.orderDiscounts.map((d) => this.resolveDiscount(tx, d, 'order', ctx.employee, now));
 
       // ── 金額計算（レジ表示と同じ関数） ──

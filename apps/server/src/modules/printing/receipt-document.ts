@@ -30,7 +30,14 @@ export function buildReceiptDocument(db: Db, transactionId: number, opts: { repr
   const { t } = row;
 
   const store = db.select().from(storeSettings).where(eq(storeSettings.id, 1)).get()!;
-  const order = db.select().from(orders).where(eq(orders.transactionId, t.id)).get();
+  // 返金・変更のレシートには元の販売の注文番号とレシート番号を載せる
+  const saleId = t.originalTransactionId ?? t.id;
+  const order = db.select().from(orders).where(eq(orders.transactionId, saleId)).get();
+  const original =
+    t.originalTransactionId === null
+      ? undefined
+      : db.select({ receiptNumber: transactions.receiptNumber }).from(transactions).where(eq(transactions.id, t.originalTransactionId)).get();
+  const isSale = t.kind === 'sale';
   const lines = db
     .select()
     .from(transactionLines)
@@ -49,8 +56,23 @@ export function buildReceiptDocument(db: Db, transactionId: number, opts: { repr
     .all();
   const taxes = db.select().from(transactionTaxSummaries).where(eq(transactionTaxSummaries.transactionId, t.id)).all();
 
+  const docLines = lines.map((l) => {
+    const opts = options.filter((o) => o.lineId === l.id);
+    return {
+      name: l.productName,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice + opts.reduce((s, o) => s + o.priceDelta, 0),
+      taxRate: l.taxRate,
+      // 返金・変更では、返品した明細を「お支払いいただいた額」（割引の按分後）で載せる
+      gross: isSale ? l.grossAmount : l.netAmount,
+      options: opts.map((o) => ({ name: o.optionName, priceDelta: o.priceDelta })),
+      discounts: isSale ? discounts.filter((d) => d.lineId === l.id).map((d) => ({ name: d.name, amount: d.amount })) : [],
+    };
+  });
+
   return {
-    kind: t.kind === 'refund' ? 'refund' : 'sale',
+    kind: t.kind,
+    originalReceiptNumber: original?.receiptNumber ?? null,
     reprint: opts.reprint,
     store: {
       code: store.storeCode,
@@ -67,20 +89,9 @@ export function buildReceiptDocument(db: Db, transactionId: number, opts: { repr
     receiptNumber: t.receiptNumber,
     diningOption: t.diningOption,
     order: order ? { number: order.orderNumber, numberingMode: order.numberingMode } : null,
-    lines: lines.map((l) => {
-      const opts = options.filter((o) => o.lineId === l.id);
-      return {
-        name: l.productName,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice + opts.reduce((s, o) => s + o.priceDelta, 0),
-        taxRate: l.taxRate,
-        gross: l.grossAmount,
-        options: opts.map((o) => ({ name: o.optionName, priceDelta: o.priceDelta })),
-        discounts: discounts.filter((d) => d.lineId === l.id).map((d) => ({ name: d.name, amount: d.amount })),
-      };
-    }),
-    subtotal: t.subtotal,
-    orderDiscounts: discounts.filter((d) => d.scope === 'order').map((d) => ({ name: d.name, amount: d.amount })),
+    lines: docLines,
+    subtotal: isSale ? t.subtotal : docLines.reduce((s, l) => s + l.gross, 0),
+    orderDiscounts: isSale ? discounts.filter((d) => d.scope === 'order').map((d) => ({ name: d.name, amount: d.amount })) : [],
     total: t.total,
     taxes: taxes
       .map((x) => ({ taxRate: x.taxRate as TaxRate, taxableAmount: x.taxableAmount, taxAmount: x.taxAmount }))

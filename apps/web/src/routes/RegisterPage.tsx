@@ -15,6 +15,7 @@ import { toCheckoutLines, useCart, type Quote } from './register/cart';
 import { CatalogView, useCatalog } from './register/CatalogView';
 import { CheckoutComplete, PaymentPanel } from './register/PaymentPanel';
 import { CloseRegister, OpenRegister, RegisterSelect } from './register/RegisterSession';
+import { TransactionHistory } from './register/TransactionHistory';
 
 type Screen =
   | { name: 'select' }
@@ -23,7 +24,8 @@ type Screen =
   | { name: 'pos'; register: RegisterStatus; employee: EmployeeInfo; sessionId: number }
   | { name: 'pay'; register: RegisterStatus; employee: EmployeeInfo; sessionId: number; quote: Quote }
   | { name: 'done'; register: RegisterStatus; employee: EmployeeInfo; sessionId: number; result: CheckoutResult }
-  | { name: 'close'; register: RegisterStatus; employee: EmployeeInfo; sessionId: number };
+  | { name: 'close'; register: RegisterStatus; employee: EmployeeInfo; sessionId: number }
+  | { name: 'history'; register: RegisterStatus; employee: EmployeeInfo; sessionId: number };
 
 /**
  * レジ。起動時にレジ番号を選び → 従業員ログイン → （未開設なら）釣銭準備金を入れて開設 →
@@ -128,6 +130,9 @@ export function RegisterPage() {
         </span>
         {screen.name === 'pos' && (
           <div className="topbar__actions">
+            <button className="btn" onClick={() => setScreen({ ...screen, name: 'history' })}>
+              取引履歴
+            </button>
             <button className="btn" onClick={logout}>
               担当交代
             </button>
@@ -168,6 +173,13 @@ export function RegisterPage() {
             cart.clear();
             setScreen({ name: 'done', register, employee, sessionId, result });
           }}
+        />
+      )}
+      {screen.name === 'history' && (
+        <TransactionHistory
+          catalog={catalog.catalog}
+          registerSessionId={sessionId}
+          onClose={() => setScreen({ ...screen, name: 'pos' })}
         />
       )}
       {screen.name === 'done' && (

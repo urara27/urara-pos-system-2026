@@ -28,7 +28,10 @@ export interface ReceiptLine {
 }
 
 export interface ReceiptDocument {
-  kind: 'sale' | 'refund';
+  /** refund: 返金 / exchange: 商品変更（返品した明細はマイナス・支払った額で載せる） */
+  kind: 'sale' | 'refund' | 'exchange';
+  /** 返金・変更の元のレシート番号 */
+  originalReceiptNumber: string | null;
   /** 再発行なら「再発行」と明記する */
   reprint: boolean;
   store: {
@@ -101,6 +104,7 @@ export function buildReceiptLayout(doc: ReceiptDocument): ReceiptRow[] {
 
   if (doc.reprint) text('【再発行】', { align: 'center', size: 'large', bold: true });
   if (doc.kind === 'refund') text('【返金】', { align: 'center', size: 'large', bold: true });
+  if (doc.kind === 'exchange') text('【商品変更】', { align: 'center', size: 'large', bold: true });
   multiline(doc.store.header);
   text(doc.store.name || '（店舗名未設定）', { align: 'center', size: 'large', bold: true });
   if (doc.store.address) text(doc.store.address, { align: 'center' });
@@ -111,12 +115,14 @@ export function buildReceiptLayout(doc: ReceiptDocument): ReceiptRow[] {
   text(formatReceiptDate(doc.issuedAt));
   pair(`レジ ${doc.register.number}（${doc.register.name}）`, `担当 ${doc.staffName}`);
   pair('レシート番号', doc.receiptNumber);
+  if (doc.originalReceiptNumber) pair('元のレシート番号', doc.originalReceiptNumber);
   pair('ご利用', DINING_OPTION_LABELS[doc.diningOption]);
   rows.push({ type: 'rule' });
 
   for (const line of doc.lines) {
     const mark = line.taxRate === 8 ? REDUCED_MARK : '';
-    pair(`${line.name}${mark}`, yenText(line.gross));
+    // 返品した明細は、お支払いいただいた額（割引の按分後）をマイナスで載せる
+    pair(`${line.gross < 0 ? '返品 ' : ''}${line.name}${mark}`, yenText(line.gross));
     for (const o of line.options) {
       text(o.priceDelta > 0 ? `・${o.name}（+${yenText(o.priceDelta)}）` : `・${o.name}`, { indent: 1 });
     }
@@ -125,10 +131,16 @@ export function buildReceiptLayout(doc: ReceiptDocument): ReceiptRow[] {
   }
   rows.push({ type: 'rule' });
 
-  const lineDiscounts = doc.lines.reduce((s, l) => s + l.discounts.reduce((a, d) => a + d.amount, 0), 0);
-  pair(`小計（${doc.lines.reduce((s, l) => s + l.quantity, 0)}点）`, yenText(doc.subtotal - lineDiscounts));
-  for (const d of doc.orderDiscounts) pair(`割引 ${d.name}`, yenText(-d.amount));
-  pair('合計', yenText(doc.total), { size: 'large', bold: true });
+  if (doc.kind === 'sale') {
+    const lineDiscounts = doc.lines.reduce((s, l) => s + l.discounts.reduce((a, d) => a + d.amount, 0), 0);
+    pair(`小計（${doc.lines.reduce((s, l) => s + l.quantity, 0)}点）`, yenText(doc.subtotal - lineDiscounts));
+    for (const d of doc.orderDiscounts) pair(`割引 ${d.name}`, yenText(-d.amount));
+    pair('合計', yenText(doc.total), { size: 'large', bold: true });
+  } else if (doc.total < 0) {
+    pair('ご返金', yenText(-doc.total), { size: 'large', bold: true });
+  } else {
+    pair(doc.total > 0 ? '差額のお支払' : '差額', yenText(doc.total), { size: 'large', bold: true });
+  }
   // 税率ごとの対象額（税込）と消費税額
   for (const t of doc.taxes) {
     pair(`${t.taxRate}%対象`, yenText(t.taxableAmount), { indent: 1 });
@@ -136,10 +148,16 @@ export function buildReceiptLayout(doc: ReceiptDocument): ReceiptRow[] {
   }
   rows.push({ type: 'rule' });
 
-  pair('お支払', PAYMENT_METHOD_LABELS[doc.payment.method]);
-  if (doc.payment.method === 'cash') {
-    pair('お預り', yenText(doc.payment.cashReceived ?? 0));
-    pair('お釣り', yenText(doc.payment.change ?? 0));
+  if (doc.total < 0) {
+    // 返金は元の支払方法で行う。PayPay の返金は PayPay 側で行い、ここには記録だけ残す
+    pair('ご返金方法', PAYMENT_METHOD_LABELS[doc.payment.method]);
+    if (doc.payment.method === 'paypay') text('PayPay への返金は PayPay で行います');
+  } else if (doc.kind === 'sale' || doc.total > 0) {
+    pair('お支払', PAYMENT_METHOD_LABELS[doc.payment.method]);
+    if (doc.payment.method === 'cash') {
+      pair('お預り', yenText(doc.payment.cashReceived ?? 0));
+      pair('お釣り', yenText(doc.payment.change ?? 0));
+    }
   }
   if (doc.lines.some((l) => l.taxRate === 8)) {
     rows.push({ type: 'space' });

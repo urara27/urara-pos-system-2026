@@ -9,6 +9,7 @@ import {
 
 const doc = (patch: Partial<ReceiptDocument> = {}): ReceiptDocument => ({
   kind: 'sale',
+  originalReceiptNumber: null,
   reprint: false,
   store: { code: 'S1', name: '店', address: '', phone: '', registrationNumber: 'T1234567890123', header: '', footer: '' },
   issuedAt: Date.UTC(2026, 10, 3, 15, 5), // 2026-11-04 00:05 JST
