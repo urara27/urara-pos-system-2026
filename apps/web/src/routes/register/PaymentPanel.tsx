@@ -8,6 +8,7 @@ import {
   type PaymentMethod,
 } from '@pos/shared';
 import { Keypad } from '../../components/Keypad';
+import { ReceiptDialog } from '../../components/ReceiptPreview';
 import { api, ApiError } from '../../lib/api';
 import { randomId } from '../../lib/id';
 import { yen } from './CatalogView';
@@ -184,8 +185,10 @@ export function PaymentPanel({
 
 /** 会計完了。注文番号を大きく出す（プリンター導入までは手書きの控えで渡す） */
 export function CheckoutComplete({ result, onNext }: { result: CheckoutResult; onNext: () => void }) {
+  const [showReceipt, setShowReceipt] = useState(false);
   return (
     <div className="complete">
+      {showReceipt && <ReceiptDialog transactionId={result.transactionId} onClose={() => setShowReceipt(false)} />}
       <p className="complete__label">注文番号</p>
       <p className="complete__number">{formatOrderNumber(result.orderNumber)}</p>
       {result.numberingMode === 'auto' ? (
@@ -219,9 +222,14 @@ export function CheckoutComplete({ result, onNext }: { result: CheckoutResult; o
           <dd>{result.receiptNumber}</dd>
         </div>
       </dl>
-      <button className="btn btn--primary btn--xl" onClick={onNext} autoFocus>
-        次のお客様
-      </button>
+      <div className="row">
+        <button className="btn btn--large" onClick={() => setShowReceipt(true)}>
+          レシートを表示
+        </button>
+        <button className="btn btn--primary btn--xl" onClick={onNext} autoFocus>
+          次のお客様
+        </button>
+      </div>
     </div>
   );
 }

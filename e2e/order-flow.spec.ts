@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
 import { E2E_ADMIN } from '../playwright.config';
 
@@ -11,11 +12,23 @@ async function adminApi(request: APIRequestContext) {
   expect(login.ok()).toBeTruthy();
   const { token } = (await login.json()) as { token: string };
   const headers = { 'x-staff-session': token };
-  return async <T>(url: string, data: object): Promise<T> => {
-    const res = await request.post(url, { headers, data });
+  return async <T>(url: string, data: object, method: 'post' | 'put' = 'post'): Promise<T> => {
+    const res = await request[method](url, { headers, data });
     expect(res.ok(), `${url}: ${await res.text()}`).toBeTruthy();
     return (await res.json()) as T;
   };
+}
+
+async function setStoreInfo(request: APIRequestContext, post: Awaited<ReturnType<typeof adminApi>>) {
+  const login = await request.post('/api/admin/login', { data: { code: E2E_ADMIN.code, password: E2E_ADMIN.password } });
+  const { token } = (await login.json()) as { token: string };
+  const current = await request.get('/api/admin/settings', { headers: { 'x-staff-session': token } });
+  const { settings } = (await current.json()) as { settings: Record<string, unknown> };
+  await post(
+    '/api/admin/settings',
+    { ...settings, storeName: 'E2E食堂', invoiceRegistrationNumber: 'T1234567890123', receiptFooter: 'ありがとうございました' },
+    'put',
+  );
 }
 
 /** 管理画面で発行したコードを、その端末の /pairing 画面で入力して登録する */
@@ -41,6 +54,7 @@ async function typeKeypad(page: Page, digits: string) {
 test('レジで会計した注文が、キッチン・カスタマーモニター・ピックアップを通って受け渡し済みになる', async ({ browser, request }) => {
   // ── マスタ: セット商品（フード）+ セットドリンク（ドリンク） ──
   const post = await adminApi(request);
+  await setStoreInfo(request, post);
   const category = await post<{ id: number }>('/api/admin/categories', { name: 'バーガー' });
   const setDrink = await post<{ id: number }>('/api/admin/option-groups', {
     name: 'セットドリンク',
@@ -92,6 +106,27 @@ test('レジで会計した注文が、キッチン・カスタマーモニタ�
 
   await expect(register.locator('.complete__number')).toHaveText('100');
   await expect(register.locator('.complete__details')).toContainText(/\d{8}-1-0001/);
+
+  // ── レジ: レシートのプレビュー（ダミードライバー）→ PDF → 再発行 ──
+  await register.getByRole('button', { name: 'レシートを表示' }).click();
+  const paper = register.getByRole('document', { name: 'レシート' });
+  for (const t of ['E2E食堂', '登録番号 T1234567890123', 'チーズバーガーセット', '・コーラ', '10%対象', '内消費税(10%)', '現金', '注文番号', '100', 'ありがとうございました']) {
+    await expect(paper).toContainText(t);
+  }
+  await expect(paper).not.toContainText('再発行');
+  const [pdfTab] = await Promise.all([
+    register.context().waitForEvent('page'),
+    register.getByRole('button', { name: 'PDF を開く' }).click(),
+  ]);
+  // ヘッドレスの Chromium には PDF ビューアが無く、新しいタブはダウンロードになる（実機のブラウザでは表示される）
+  const download = await pdfTab.waitForEvent('download');
+  const pdfBytes = await fs.readFile(await download.path());
+  expect(pdfBytes.subarray(0, 5).toString()).toBe('%PDF-');
+  await pdfTab.close();
+  register.once('dialog', (d) => void d.accept());
+  await register.getByRole('button', { name: '再発行' }).click();
+  await expect(paper).toContainText('【再発行】');
+  await register.getByRole('button', { name: '閉じる' }).click();
 
   // ── カスタマーモニター: おつくり中に表示 ──
   await expect(preparing).toContainText('100');

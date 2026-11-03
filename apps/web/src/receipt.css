@@ -1,0 +1,60 @@
+/* レシートのプレビュー（80mm ロール紙の見た目）。行データは PDF・印刷と共通 */
+
+.receipt-dialog {
+  width: min(520px, 100%);
+}
+.receipt-dialog__body {
+  display: grid;
+  justify-items: center;
+  max-height: 60dvh;
+  overflow-y: auto;
+  margin: 12px 0 16px;
+  padding: 16px 0;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.receipt-paper {
+  /* 80mm 紙・48桁 ≒ 1文字 = 幅 6.6px（12px フォントの半角） */
+  width: 320px;
+  padding: 16px 14px 24px;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.12);
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.receipt-row {
+  overflow-wrap: anywhere;
+}
+.receipt-row--pair {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.receipt-row--pair > span:last-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.receipt-row--large {
+  font-size: 18px;
+}
+.receipt-row--xlarge {
+  font-size: 44px;
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+}
+.receipt-row.is-bold {
+  font-weight: 800;
+}
+.receipt-rule {
+  margin: 6px 0;
+  border: 0;
+  border-top: 1px dashed #555;
+}
+.receipt-rule--double {
+  border-top: 3px double #333;
+}
+.receipt-space {
+  height: 8px;
+}

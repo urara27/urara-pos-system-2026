@@ -15,6 +15,7 @@ import type { RealtimeHub } from '../../realtime/hub.js';
 import type { Guards } from '../auth/guards.js';
 import type { CheckoutService } from '../checkout/service.js';
 import type { RegisterService } from '../registers/service.js';
+import type { PrintingService } from '../printing/service.js';
 import type { OrderService } from './service.js';
 
 const idParams = z.object({ id: z.coerce.number().int().positive() });
@@ -33,12 +34,13 @@ export interface OrderDeps {
   orders: OrderService;
   checkout: CheckoutService;
   registers: RegisterService;
+  printing: PrintingService;
   hub: RealtimeHub;
   guards: Guards;
 }
 
 export function orderRoutes(app: FastifyInstance, deps: OrderDeps) {
-  const { orders, checkout, registers, hub, guards } = deps;
+  const { orders, checkout, registers, printing, hub, guards } = deps;
   const notify = (order: OrderView, change: OrderChange) => {
     hub.emit(rooms.all, 'order.updated', { order, change });
     return order;
@@ -72,8 +74,16 @@ export function orderRoutes(app: FastifyInstance, deps: OrderDeps) {
   app.post('/api/transactions', { preHandler: guards.requireStaff() }, async (req) => {
     const body = parse(checkoutRequest, req.body);
     const { result, orderId } = checkout.checkout(body, { deviceId: req.device!.id, employee: req.session!.employee });
-    // 再送（replayed）のときは既に通知済み
-    if (orderId !== null) notify(orders.get(orderId), 'created');
+    // 再送（replayed）のときは通知・印刷・ドロア開放は済んでいる
+    if (orderId !== null) {
+      notify(orders.get(orderId), 'created');
+      // 印刷・ドロアの不調で会計の応答を止めない（会計は確定済み）
+      const afterCheckout = async () => {
+        if (result.paymentMethod === 'cash') await printing.openDrawer(result.transactionId);
+        await printing.printReceipt(result.transactionId);
+      };
+      afterCheckout().catch((err: unknown) => req.log.error({ err }, 'レシート印刷・ドロア開放に失敗しました'));
+    }
     return result;
   });
 

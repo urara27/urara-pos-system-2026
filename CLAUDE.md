@@ -67,6 +67,14 @@ pnpm モノレポ / TypeScript strict
 - レジの流れ: レジ選択（ログイン前）→ ログイン → 開設 → 会計。店内／持ち帰りは会計ごとに必ず選ばせる（既定値なし）
 - キッチンのカード表示は `kitchenItems()`。オプションのステーションが商品と違えば（セットのドリンク）そのステーション側に親商品名つきで出す
 
+## 印刷（フェーズ4）
+- レシートは `packages/shared/src/receipt.ts` の `ReceiptDocument` → `buildReceiptLayout()` で「行」（text / pair / rule / space）にし、画面プレビュー（`components/ReceiptPreview.tsx`）・PDF（`modules/printing/pdf.ts`）・等幅テキスト（`renderReceiptText`、80mm=48桁、large/xlarge は倍角）がすべて同じ行から描く。記載項目を変えるときは buildReceiptLayout だけを直す
+- ドライバーは `modules/printing/driver.ts` の `PrinterDriver`（`print` / `openDrawer`）。今は `DummyPrinterDriver` のみで、`PrinterRegistry.driverFor(registers.printer_id)` で選ぶ。実機は ESC/POS ドライバーを追加する
+- 会計確定後の印刷・ドロア開放は応答を待たせない（失敗してもログに出すだけで、会計は確定済み）
+- 明細・金額は会計時のスナップショット、店舗情報（名称・登録番号など）は出力時点の設定を使う
+- PDF のフォントは `@expo-google-fonts/noto-sans-jp` の TTF（Regular/Bold）。pdfkit がサブセットを埋め込む
+- 再発行は `POST /api/transactions/:id/reprint`（操作ログ `receipt.reprinted`）。参照は `requireStaffOrAdmin`（レジのログインか管理者）
+
 ## デザイン
 - 管理画面は **デジタル庁デザインシステム（DADS, https://design.digital.go.jp/dads/）** に準拠する。スタイルは `apps/web/src/routes/admin/admin.css` に集約し、`.dads` クラスの内側に閉じる（レジ・キッチン等は対象外）
 - 色・文字サイズ・行間・角丸・影は公式トークン `@digital-go-jp/design-tokens`（MIT）の CSS 変数（`--color-key-900`, `--color-neutral-solid-gray-800`, `--font-size-16`, `--border-radius-8` など）を使い、色を直書きしない
@@ -75,4 +83,4 @@ pnpm モノレポ / TypeScript strict
 
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
-- 現在: フェーズ3（注文フロー）完了。次はフェーズ4（印刷基盤: 印刷ドライバーとダミードライバーによるレシートのプレビュー・PDF）
+- 現在: フェーズ4（印刷基盤）完了。次はフェーズ5（返金・変更: 取引検索、全額・一部返金、商品変更、責任者PIN）

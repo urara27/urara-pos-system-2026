@@ -159,6 +159,14 @@
 - **キッチン**: カードは1回のタップで完了（確認ダイアログなし）。誤操作は「直近に完了」から戻す。注文の状態（受付済み/呼び出し中）とステーションの完了は別に持つ
 - **営業日**: 会計・開設のたびに、切替時刻で決まる営業日の行が無ければ作る。閉店操作（フェーズ6/7）を実装するまでは営業日が閉じられることはない
 
+### フェーズ4で確定した実装（印刷基盤）
+- **レイアウトの一元化**: `ReceiptDocument`（取引から作る）→ `buildReceiptLayout()` で行（text / pair / rule / space、文字サイズ normal / large / xlarge）に並べ、画面プレビュー・PDF・等幅テキストが同じ行を描く。将来の ESC/POS ドライバーも、この行を倍角コマンドに変換して使う
+- **ドライバー**: `PrinterDriver { print(job), openDrawer() }`。当面は `DummyPrinterDriver`（受け付けてログに残すだけ）。レジごとのプリンター割り当ては `registers.printer_id` で、`PrinterRegistry` が選ぶ
+- **PDF**: pdfkit（MIT）でサーバー側生成。80mm 幅・高さは内容に合わせる。フォントは Noto Sans JP（OFL、`@expo-google-fonts/noto-sans-jp` の TTF）を同梱し、使った文字だけ埋め込む（1枚 25KB 前後）
+- **API**: `GET /api/transactions/:id/receipt`（行と等幅テキスト）、`GET /api/transactions/:id/receipt.pdf?reprint=0|1`、`POST /api/transactions/:id/reprint`（【再発行】と明記・操作ログ）。レジのログインか管理者ログインで使える
+- **適格簡易請求書**: 登録番号・取引年月日・明細（軽減税率の対象に「※」と注記）・税率ごとの対象額（税込）・税率ごとの消費税額を必ず載せる。明細・金額は会計時の記録、店舗情報は出力時点の設定を使う
+- **会計確定時**: 現金ならドロアを開く指示、続けてレシートの印刷指示をドライバーへ送る。応答は待たず、失敗してもログに出すだけ（会計は確定済み）
+
 ---
 
 ## 5. 計算ルール（案・テストで固定する）

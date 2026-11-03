@@ -75,7 +75,16 @@ export function createGuards(auth: AuthService) {
     if (!session || session.kind !== 'admin') throw unauthorized('管理者ログインが必要です');
   };
 
-  return { requireDevice, requireStaff, requireAdmin, resolveDevice, resolveSession };
+  /** レジでの従業員ログインか、管理画面ログインのどちらかを要求する（レシートの参照など） */
+  const requireStaffOrAdmin: preHandlerHookHandler = async (request: FastifyRequest) => {
+    const session = resolveSession(request);
+    if (session?.kind === 'admin') return;
+    const device = resolveDevice(request);
+    if (!device) throw unauthorized('ログインしてください');
+    if (!session || session.kind !== 'staff' || session.deviceId !== device.id) throw unauthorized('ログインしてください');
+  };
+
+  return { requireDevice, requireStaff, requireAdmin, requireStaffOrAdmin, resolveDevice, resolveSession };
 }
 
 function unauthorizedDevice() {

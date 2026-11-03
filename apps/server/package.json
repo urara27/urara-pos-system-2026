@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.6",
+    "@types/pdfkit": "^0.17.7",
     "drizzle-kit": "^0.31.11",
     "socket.io-client": "^4.8.4",
     "tsup": "^9.0.0",
@@ -22,12 +23,14 @@
     "vitest": "^5.1.0"
   },
   "dependencies": {
+    "@expo-google-fonts/noto-sans-jp": "0.4.4",
     "@fastify/static": "^10.1.8",
     "@node-rs/argon2": "^2.2.2",
     "@pos/shared": "workspace:*",
     "better-sqlite3": "^12.11.1",
     "drizzle-orm": "^0.45.4",
     "fastify": "^5.12.8",
+    "pdfkit": "0.20.2",
     "socket.io": "^4.8.4",
     "zod": "^4.6.7"
   }
