@@ -427,7 +427,7 @@ select {
 .admin__body {
   flex: 1;
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 200px minmax(0, 1fr);
 }
 .admin__nav {
   display: flex;
@@ -457,6 +457,7 @@ select {
   margin: 0;
   padding: 16px 24px 48px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-content: start;
 }

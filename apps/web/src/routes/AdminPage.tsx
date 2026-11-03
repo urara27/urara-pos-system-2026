@@ -14,6 +14,7 @@ import { OptionGroupsPage } from './admin/OptionGroupsPage';
 import { ProductsPage } from './admin/ProductsPage';
 import { RegistersPage } from './admin/RegistersPage';
 import { SettingsPage } from './admin/SettingsPage';
+import './admin/admin.css';
 
 type LoginState = { state: 'checking' } | { state: 'out' } | { state: 'in'; employee: EmployeeInfo };
 
@@ -69,7 +70,7 @@ function AdminLogin({ onLogin }: { onLogin: (res: StaffSessionResponse) => void 
   };
 
   return (
-    <main className="panel-page">
+    <main className="panel-page dads">
       <form className="panel" onSubmit={submit}>
         <h1>管理画面ログイン</h1>
         <label className="field">
@@ -118,7 +119,7 @@ function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: 
   });
 
   return (
-    <div className="admin">
+    <div className="admin dads">
       <OfflineBanner />
       <header className="topbar">
         <strong>管理画面</strong>

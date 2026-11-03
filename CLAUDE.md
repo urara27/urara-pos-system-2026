@@ -56,6 +56,12 @@ pnpm モノレポ / TypeScript strict
 - マスタの入力スキーマは `packages/shared/src/masters.ts`。変更したら `catalog.updated` / `settings.updated` を全端末へ送る
 - React Router 8 は `/admin/*` のようなスプラット配下で相対リンクが現在の URL 基準になるので、管理画面のリンクは絶対パスで書く
 
+## デザイン
+- 管理画面は **デジタル庁デザインシステム（DADS, https://design.digital.go.jp/dads/）** に準拠する。スタイルは `apps/web/src/routes/admin/admin.css` に集約し、`.dads` クラスの内側に閉じる（レジ・キッチン等は対象外）
+- 色・文字サイズ・行間・角丸・影は公式トークン `@digital-go-jp/design-tokens`（MIT）の CSS 変数（`--color-key-900`, `--color-neutral-solid-gray-800`, `--font-size-16`, `--border-radius-8` など）を使い、色を直書きしない
+- 部品の寸法・状態は DADS の HTML 実装例（github.com/digital-go-jp/design-system-example-components-html）に合わせる: ボタン中 48px（塗り=主要操作 / アウトライン=既定 / 小 36px）、入力・セレクト高さ 48px・枠 gray-600・角丸 8px、フォーカスは黒 4px アウトライン + 黄色の外周、表は見出し gray-100・行ホバー key-50、通知はカラーチップ型バナー、項目ラベルは太字 → サポートテキスト → 入力欄、必須は「※必須」（赤）
+- フォントは Noto Sans JP を `@fontsource/noto-sans-jp`（400/700）で同梱する。外部 CDN は使わない
+
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
 - 現在: フェーズ2（マスタ）完了。次はフェーズ3（注文フロー: 会計・採番・キッチン・カスタマー・ピックアップ）

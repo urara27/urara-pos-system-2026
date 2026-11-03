@@ -1,0 +1,524 @@
+/*
+ * 管理画面のスタイル。デジタル庁デザインシステム（DADS）に準拠する。
+ *   https://design.digital.go.jp/dads/
+ * 色・文字・角丸・影は公式トークン（@digital-go-jp/design-tokens）の CSS 変数を使い、
+ * 部品の寸法・状態は DADS の HTML 実装例（ボタン・テキスト入力・セレクト・チェックボックス・
+ * テーブル・ノティフィケーションバナー・フォームコントロールラベル）に合わせている。
+ * フォントは Noto Sans JP を npm パッケージから同梱する（外部 CDN は使わない）。
+ * すべて .dads の内側に閉じ、レジ・キッチンなど他の画面には影響させない。
+ */
+@import '@digital-go-jp/design-tokens/dist/tokens.css';
+@import '@fontsource/noto-sans-jp/400.css';
+@import '@fontsource/noto-sans-jp/700.css';
+
+.dads {
+  /* フォーカスリングは DADS 共通: 黒の 4px アウトライン + 黄色の外周 */
+  --dads-focus-outline: calc(4 / 16 * 1rem) solid var(--color-neutral-black);
+  --dads-focus-ring: 0 0 0 calc(2 / 16 * 1rem) var(--color-primitive-yellow-300);
+
+  min-height: 100%;
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-solid-gray-800);
+  font-family: var(--font-family-sans), system-ui, sans-serif;
+  font-size: var(--font-size-16);
+  line-height: var(--line-height-170);
+  letter-spacing: 0.02em;
+}
+
+.dads :is(button, input, select, textarea, a):focus-visible {
+  outline: var(--dads-focus-outline);
+  outline-offset: calc(2 / 16 * 1rem);
+  box-shadow: var(--dads-focus-ring);
+}
+
+.dads a {
+  color: var(--color-key-900);
+  text-underline-offset: calc(3 / 16 * 1rem);
+}
+
+.dads h1,
+.dads h2,
+.dads h3 {
+  color: var(--color-neutral-solid-gray-900);
+  font-weight: var(--font-weight-700);
+  letter-spacing: 0.02em;
+}
+
+.dads .muted {
+  color: var(--color-neutral-solid-gray-600);
+}
+.dads .small {
+  font-size: var(--font-size-14);
+  line-height: var(--line-height-170);
+}
+
+/* ───── ヘッダー（ヘッダーコンテナ） ───── */
+
+.dads .topbar {
+  min-height: 64px;
+  padding: 0 24px;
+  padding-right: 200px;
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-solid-gray-900);
+  border-bottom: 1px solid var(--color-neutral-solid-gray-420);
+}
+.dads .topbar strong {
+  font-size: var(--font-size-20);
+  line-height: var(--line-height-150);
+}
+
+.dads .connection-badge {
+  top: 14px;
+  border: 1px solid var(--color-neutral-solid-gray-420);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-solid-gray-800);
+}
+.dads .connection-badge--connected .connection-badge__dot {
+  background: var(--color-semantic-success-1);
+}
+.dads :is(.connection-badge--disconnected, .connection-badge--unauthorized) .connection-badge__dot {
+  background: var(--color-semantic-error-1);
+}
+
+.dads .offline-banner {
+  background: var(--color-semantic-error-2);
+}
+
+/* ───── サイドナビ（メニューリスト） ───── */
+
+.dads .admin__nav {
+  gap: 0;
+  padding: 16px 0;
+  background: var(--color-neutral-white);
+  border-right: 1px solid var(--color-neutral-solid-gray-420);
+}
+.dads .admin__nav a {
+  min-height: 52px;
+  padding: 0 20px;
+  border-left: 4px solid transparent;
+  border-radius: 0;
+  color: var(--color-neutral-solid-gray-800);
+  font-weight: var(--font-weight-400);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .dads .admin__nav a:hover {
+    background: var(--color-key-50);
+    color: var(--color-key-1000);
+    text-decoration: underline;
+  }
+}
+/* 現在地 */
+.dads .admin__nav a.is-active {
+  border-left-color: var(--color-key-900);
+  background: var(--color-key-50);
+  color: var(--color-key-900);
+  font-weight: var(--font-weight-700);
+}
+@media (max-width: 760px) {
+  .dads .admin__nav {
+    padding: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-neutral-solid-gray-420);
+  }
+  .dads .admin__nav a {
+    border-left: 0;
+    border-bottom: 4px solid transparent;
+  }
+  .dads .admin__nav a.is-active {
+    border-bottom-color: var(--color-key-900);
+  }
+}
+
+.dads .admin__main,
+.dads .admin__main > form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-content: start;
+}
+.dads .admin__main {
+  padding: 24px 32px 64px;
+}
+
+.dads .page-header h1 {
+  font-size: var(--font-size-28);
+  line-height: var(--line-height-150);
+}
+
+/* ───── カード（区切りの枠） ───── */
+
+.dads .card {
+  padding: 24px;
+  border: 1px solid var(--color-neutral-solid-gray-420);
+  border-radius: var(--border-radius-8);
+  box-shadow: none;
+}
+.dads .card h2 {
+  margin-bottom: 12px;
+  font-size: var(--font-size-20);
+  line-height: var(--line-height-150);
+}
+
+/* ───── ボタン ───── */
+
+.dads .btn {
+  /* 既定は「アウトライン」・中サイズ（高さ 48px） */
+  --button-color: var(--color-key-900);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 96px;
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 1px solid currentcolor;
+  border-radius: var(--border-radius-8);
+  background: var(--color-neutral-white);
+  color: var(--button-color);
+  font-weight: var(--font-weight-700);
+  font-size: var(--font-size-16);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-underline-offset: calc(3 / 16 * 1rem);
+}
+@media (hover: hover) {
+  .dads .btn:not(:disabled):hover {
+    background: var(--color-key-200);
+    color: var(--color-key-1000);
+    text-decoration: underline;
+  }
+}
+.dads .btn:not(:disabled):active {
+  background: var(--color-key-300);
+  color: var(--color-key-1200);
+}
+.dads .btn:disabled {
+  opacity: 1;
+  color: var(--color-neutral-solid-gray-300);
+}
+
+/* 主要な操作は「塗り」 */
+.dads .btn--primary {
+  border: 4px double transparent;
+  background: var(--color-key-900);
+  color: var(--color-neutral-white);
+}
+@media (hover: hover) {
+  .dads .btn--primary:not(:disabled):hover {
+    background: var(--color-key-1000);
+    color: var(--color-neutral-white);
+  }
+}
+.dads .btn--primary:not(:disabled):active {
+  background: var(--color-key-1200);
+  color: var(--color-neutral-white);
+}
+.dads .btn--primary:disabled {
+  background: var(--color-neutral-solid-gray-300);
+  color: var(--color-neutral-solid-gray-50);
+}
+
+/* 小サイズ（高さ 36px。タップ領域は ::after で 44px 確保） */
+.dads .btn--small {
+  position: relative;
+  min-width: 80px;
+  min-height: 36px;
+  padding: 2px 12px;
+  border-radius: var(--border-radius-6);
+}
+.dads .btn--small::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  height: 44px;
+}
+
+/* 取り消し・売切など注意を促す操作 */
+.dads .btn--danger {
+  --button-color: var(--color-semantic-error-2);
+  border-color: currentcolor;
+  background: var(--color-primitive-red-50);
+}
+@media (hover: hover) {
+  .dads .btn--danger:not(:disabled):hover {
+    background: var(--color-primitive-red-100);
+    color: var(--color-primitive-red-1000);
+  }
+}
+
+.dads .topbar .btn {
+  min-height: 40px;
+}
+
+/* ───── フォーム（フォームコントロールラベル・テキスト入力・セレクト） ───── */
+
+.dads .field {
+  gap: 8px;
+  align-content: start;
+  font-weight: var(--font-weight-400);
+}
+.dads .field > span:first-child {
+  color: var(--color-neutral-solid-gray-800);
+  font-size: var(--font-size-17);
+  font-weight: var(--font-weight-700);
+}
+.dads .field__support {
+  color: var(--color-neutral-solid-gray-600);
+  font-size: var(--font-size-16);
+  line-height: var(--line-height-170);
+}
+.dads .required {
+  margin-left: 4px;
+  color: var(--color-semantic-error-1);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-400);
+}
+
+.dads :is(input:not([type='checkbox'], [type='radio'], [type='color']), select, textarea) {
+  box-sizing: border-box;
+  max-width: 100%;
+  border: 1px solid var(--color-neutral-solid-gray-600);
+  border-radius: var(--border-radius-8);
+  background-color: var(--color-neutral-white);
+  color: var(--color-neutral-solid-gray-900);
+  font: inherit;
+  letter-spacing: inherit;
+}
+.dads :is(input:not([type='checkbox'], [type='radio'], [type='color']), select) {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 16px;
+  line-height: 1;
+}
+.dads textarea {
+  padding: 12px 16px;
+  line-height: var(--line-height-170);
+}
+@media (hover: hover) {
+  .dads :is(input:not([type='checkbox'], [type='radio'], [type='color']), select, textarea):not(:disabled):hover {
+    border-color: var(--color-neutral-black);
+  }
+}
+.dads :is(input, select, textarea):user-invalid {
+  border-color: var(--color-semantic-error-1);
+}
+.dads :is(input, select, textarea):disabled {
+  border-color: var(--color-neutral-solid-gray-300);
+  background-color: var(--color-neutral-solid-gray-50);
+  color: var(--color-neutral-solid-gray-420);
+}
+/* セレクトの矢印（DADS のシェブロン相当） */
+.dads select {
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 5.5 8 11.5 14 5.5' fill='none' stroke='%231a1a1a' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px 16px;
+}
+
+.dads input[type='color'] {
+  width: 64px;
+  height: 48px;
+  padding: 4px;
+  border: 1px solid var(--color-neutral-solid-gray-600);
+  border-radius: var(--border-radius-8);
+  background: var(--color-neutral-white);
+}
+
+/* チェックボックス（中サイズ: 32px 枠に 24px のボックス） */
+.dads .checkbox {
+  gap: 8px;
+  min-height: 44px;
+  font-weight: var(--font-weight-400);
+}
+.dads input[type='checkbox'] {
+  flex-shrink: 0;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  margin: 4px;
+  border: 2px solid var(--color-neutral-solid-gray-600);
+  border-radius: 4px;
+  background: var(--color-neutral-white);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .dads input[type='checkbox']:not(:disabled):hover {
+    border-color: var(--color-neutral-black);
+    box-shadow: 0 0 0 4px var(--color-neutral-solid-gray-420);
+  }
+}
+.dads input[type='checkbox']:checked {
+  border-color: var(--color-key-900);
+  background: var(--color-key-900)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5 10 17.5 19 7' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E")
+    center / 100% no-repeat;
+}
+.dads input[type='checkbox']:disabled {
+  border-color: var(--color-neutral-solid-gray-300);
+  background-color: var(--color-neutral-solid-gray-50);
+}
+
+.dads .form {
+  gap: 24px;
+}
+.dads .form--grid {
+  gap: 24px 32px;
+}
+.dads .form h3 {
+  font-size: var(--font-size-18);
+}
+.dads .input-suffix > span {
+  color: var(--color-neutral-solid-gray-800);
+}
+
+/* ───── テーブル（行ホバー強調・列ヘッダー） ───── */
+
+.dads .table {
+  border-collapse: collapse;
+  color: var(--color-neutral-solid-gray-800);
+  line-height: var(--line-height-130);
+}
+.dads .table th,
+.dads .table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-neutral-solid-gray-500);
+  vertical-align: middle;
+}
+/* 長い名前は折り返し、見出し・金額・ボタンは折り返さない */
+.dads .table td {
+  white-space: normal;
+}
+.dads .table :is(td.num, td:has(> .btn), td:has(> .pill)) {
+  white-space: nowrap;
+}
+.dads .table thead th {
+  background: var(--color-neutral-solid-gray-100);
+  color: var(--color-neutral-solid-gray-900);
+  font-weight: var(--font-weight-700);
+}
+@media (hover: hover) {
+  .dads .table tbody tr:hover {
+    background: var(--color-key-50);
+  }
+}
+.dads .table tr.is-disabled td {
+  color: var(--color-neutral-solid-gray-536);
+}
+.dads .table--form th,
+.dads .table--form td {
+  padding: 8px;
+}
+
+/* ───── 通知（ノティフィケーションバナー: カラーチップ型） ───── */
+
+.dads .notice,
+.dads p.error {
+  margin: 0;
+  padding: 12px 16px 12px 32px;
+  border: 2px solid var(--_banner-color);
+  border-radius: 0;
+  background: var(--color-neutral-white);
+  box-shadow: inset 12px 0 0 0 var(--_banner-color);
+  color: var(--color-neutral-solid-gray-900);
+  font-weight: var(--font-weight-700);
+}
+.dads .notice {
+  --_banner-color: var(--color-primitive-blue-900);
+}
+.dads p.error {
+  --_banner-color: var(--color-semantic-error-1);
+}
+.dads .error-list {
+  color: var(--color-semantic-error-2);
+}
+
+/* ───── ラベル類（チップラベル相当） ───── */
+
+.dads .pill {
+  padding: 2px 8px;
+  border: 1px solid currentcolor;
+  border-radius: var(--border-radius-4);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-solid-gray-600);
+  font-size: var(--font-size-14);
+  line-height: var(--line-height-150);
+}
+.dads .pill--on {
+  background: var(--color-primitive-green-50);
+  color: var(--color-semantic-success-2);
+}
+.dads .pill--off {
+  background: var(--color-primitive-red-50);
+  color: var(--color-semantic-error-2);
+}
+
+.dads .chip {
+  min-height: 40px;
+  border: 1px solid var(--color-neutral-solid-gray-600);
+  border-radius: var(--border-radius-full);
+  color: var(--color-neutral-solid-gray-800);
+}
+.dads .chip.is-active {
+  border-color: var(--color-key-900);
+  background: var(--color-key-900);
+  color: var(--color-neutral-white);
+}
+
+.dads .dot--on {
+  background: var(--color-semantic-success-1);
+}
+.dads .dot--off {
+  background: var(--color-neutral-solid-gray-420);
+}
+
+.dads .option-list li {
+  border-bottom-color: var(--color-neutral-solid-gray-100);
+}
+
+.dads .pairing-code__value {
+  color: var(--color-neutral-solid-gray-900);
+  font-family: var(--font-family-mono), ui-monospace, monospace;
+}
+
+/* ───── モーダルダイアログ ───── */
+
+.dads .modal-backdrop,
+.dads.modal-backdrop {
+  background: var(--color-neutral-opacity-gray-500);
+}
+.dads .modal {
+  padding: 24px 32px 32px;
+  border-radius: var(--border-radius-16);
+  box-shadow: var(--elevation-8);
+}
+.dads .modal__header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-neutral-solid-gray-420);
+}
+.dads .modal__header h2 {
+  font-size: var(--font-size-24);
+  line-height: var(--line-height-150);
+}
+
+/* ───── ログイン ───── */
+
+.dads.panel-page {
+  background: var(--color-neutral-solid-gray-50);
+}
+.dads .panel {
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid var(--color-neutral-solid-gray-420);
+  border-radius: var(--border-radius-16);
+  box-shadow: none;
+}
+.dads .panel h1 {
+  font-size: var(--font-size-28);
+  line-height: var(--line-height-150);
+}

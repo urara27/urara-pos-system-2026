@@ -61,15 +61,20 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
 interface FieldProps {
   label: string;
   hint?: string;
+  required?: boolean;
   children: ReactNode;
 }
 
-export function Field({ label, hint, children }: FieldProps) {
+/** DADS のフォームコントロールラベル: 項目名（太字）→ サポートテキスト → 入力欄 の順に並べる */
+export function Field({ label, hint, required = false, children }: FieldProps) {
   return (
     <label className="field">
-      <span>{label}</span>
+      <span>
+        {label}
+        {required && <span className="required">※必須</span>}
+      </span>
+      {hint && <span className="field__support">{hint}</span>}
       {children}
-      {hint && <small className="muted">{hint}</small>}
     </label>
   );
 }
@@ -85,7 +90,7 @@ export function TextInput({
   'value' | 'onChange'
 >) {
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} required={rest.required}>
       <input {...rest} value={value} onChange={(e) => onChange(e.target.value)} />
     </Field>
   );
