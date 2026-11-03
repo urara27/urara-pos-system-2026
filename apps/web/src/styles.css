@@ -1,0 +1,418 @@
+/* 外部フォント・CDN は使わない（オフライン営業のため）。システムフォントのみ */
+:root {
+  --font: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic UI',
+    Meiryo, sans-serif;
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #d1d5db;
+  --primary: #1d4ed8;
+  --primary-text: #ffffff;
+  --danger: #b91c1c;
+  --ok: #15803d;
+  --warn: #b45309;
+  --topbar: #1f2937;
+  --topbar-text: #f9fafb;
+  /* 指で押しやすい最小サイズ（44pt） */
+  --tap: 48px;
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+input,
+select {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+.btn--block {
+  display: block;
+  width: 100%;
+}
+.btn--small {
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 0.875rem;
+}
+.error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.center-message {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--muted);
+}
+
+/* ───── 共通レイアウト ───── */
+
+.screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 8px 16px;
+  padding-right: 180px; /* 通信状態表示のぶん空ける */
+  background: var(--topbar);
+  color: var(--topbar-text);
+}
+.topbar .btn {
+  margin-left: auto;
+}
+
+.placeholder {
+  margin: 24px;
+  padding: 32px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  color: var(--muted);
+}
+
+.panel-page {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.panel {
+  width: min(440px, 100%);
+  padding: 24px;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.08);
+  display: grid;
+  gap: 16px;
+}
+.panel--wide {
+  width: min(760px, 100%);
+}
+.panel h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+.panel p {
+  margin: 0;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+}
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid #4b5563;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented button {
+  min-height: 44px;
+  min-width: 96px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segmented button.is-active {
+  background: var(--primary);
+}
+
+/* ───── 通信状態 ───── */
+
+.connection-badge {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(17 24 39 / 0.85);
+  color: #fff;
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+.connection-badge__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+.connection-badge--connected .connection-badge__dot {
+  background: #22c55e;
+}
+.connection-badge--disconnected .connection-badge__dot,
+.connection-badge--unauthorized .connection-badge__dot {
+  background: #ef4444;
+}
+
+.offline-banner {
+  padding: 10px 16px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: calc(100% - 32px);
+  padding: 14px 20px;
+  border-radius: var(--radius);
+  background: #111827;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+}
+
+/* ───── テンキー ───── */
+
+.keypad {
+  display: grid;
+  gap: 12px;
+}
+.keypad__display {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.keypad__label {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.keypad__value {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+.keypad__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.keypad__key {
+  min-height: 64px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.keypad__key:active {
+  background: var(--bg);
+}
+.keypad__key--fn {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.login-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.login-steps__actions {
+  display: grid;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .login-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ───── 管理画面 ───── */
+
+.admin {
+  min-height: 100%;
+}
+.admin__main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.table tr.is-disabled td {
+  color: var(--muted);
+}
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+.dot--on {
+  background: #22c55e;
+}
+.dot--off {
+  background: #9ca3af;
+}
+.pairing-code {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin: 12px 0 0;
+}
+.pairing-code__value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───── カスタマーモニター ───── */
+
+.screen--customer {
+  background: #0f172a;
+  color: #f8fafc;
+}
+.tap-to-start {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0f172a;
+  color: #f8fafc;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.tap-to-start__title {
+  font-size: 3rem;
+  font-weight: 800;
+}
+.tap-to-start__sub {
+  font-size: 1.25rem;
+  color: #94a3b8;
+}
+.customer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+}
+.customer__area {
+  padding: 24px;
+}
+.customer__area h2 {
+  margin: 0 0 16px;
+  font-size: 2.5rem;
+  text-align: center;
+}
+.customer__area--preparing {
+  border-right: 4px solid #334155;
+}
+.customer__area--calling h2 {
+  color: #fbbf24;
+}

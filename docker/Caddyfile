@@ -1,0 +1,21 @@
+# 店内LAN向けの HTTPS 終端。証明書は mkcert で作ったものを ./certs に置く（scripts/create-certs.sh）
+{
+	auto_https off
+}
+
+:443 {
+	tls /certs/server.pem /certs/server-key.pem
+	encode gzip
+	reverse_proxy app:3000
+}
+
+# iPad 等に CA 証明書を配るためだけに HTTP で rootCA.crt を公開し、それ以外は HTTPS へ転送する
+:80 {
+	handle /rootCA.crt {
+		root * /certs
+		file_server
+	}
+	handle {
+		redir https://{host}{uri} permanent
+	}
+}

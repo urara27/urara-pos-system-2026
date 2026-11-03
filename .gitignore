@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+data/
+backups/
+certs/
+test-results/
+playwright-report/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*

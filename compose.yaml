@@ -1,0 +1,34 @@
+# 店内サーバーでの起動: docker compose up -d --build
+# サーバー再起動時も restart: unless-stopped で自動起動する（Docker サービスの自動起動が前提）
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Tokyo}
+      INITIAL_ADMIN_CODE: ${INITIAL_ADMIN_CODE:-}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      # DB（SQLite）。コンテナ内は uid 1000 (node) で書き込む
+      - ./data:/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+
+volumes:
+  caddy_data:
