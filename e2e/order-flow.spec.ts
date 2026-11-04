@@ -44,7 +44,14 @@ test('レジで会計した注文が、キッチン・カスタマーモニタ�
   const customer = await pairDevice(browser, post, 'customer', 'カスタマーモニター');
   const pickup = await pairDevice(browser, post, 'pickup', 'ピックアップ');
 
-  await customer.getByRole('button', { name: /画面をタップして開始/ }).click();
+  // 自動再生が許可されたブラウザ（キオスク設定・Playwright の Chromium）では、タップなしで表示が始まる
+  const areas = customer.locator('.customer__areas');
+  try {
+    await areas.waitFor({ timeout: 3000 });
+  } catch {
+    await customer.getByRole('button', { name: /画面をタップして開始/ }).click();
+  }
+  await expect(areas).toBeVisible();
   const preparing = customer.locator('.customer__area--preparing');
   const calling = customer.locator('.customer__area--calling');
 

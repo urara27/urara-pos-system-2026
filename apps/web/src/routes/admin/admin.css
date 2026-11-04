@@ -675,3 +675,9 @@
   font-size: var(--font-size-14);
   white-space: pre-wrap;
 }
+
+.dads .ops-state {
+  margin: 0;
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-700);
+}

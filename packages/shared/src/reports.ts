@@ -89,6 +89,7 @@ export const AUDIT_CATEGORIES = {
   register: 'レジ開設・閉設',
   device: '端末・ログイン',
   receipt: 'レシート',
+  operation: '閉店・バックアップ',
 } as const;
 export type AuditCategory = keyof typeof AUDIT_CATEGORIES;
 
@@ -109,6 +110,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'employee.created': '従業員の追加',
   'employee.updated': '従業員の変更',
   'employee.bootstrap_admin': '初期管理者の作成',
+  'employee.admin_password_reset': '管理者パスワードの復旧',
   'register.created': 'レジの追加',
   'register.updated': 'レジの変更',
   'register.opened': 'レジの開設',
@@ -119,6 +121,10 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'device.updated': '端末の変更',
   'admin.login': '管理画面へのログイン',
   'receipt.reprinted': 'レシートの再発行',
+  'business_day.closed': '閉店（営業日の終了）',
+  'business_day.reopened': '営業日の再開',
+  'backup.created': 'バックアップ',
+  'backup.failed': 'バックアップの失敗',
 };
 
 /** 操作の分類（絞り込み用）。action の前方一致で決める */
@@ -129,6 +135,7 @@ export function auditCategoryOf(action: string): AuditCategory {
   if (action === 'register.opened' || action === 'register.closed') return 'register';
   if (action.startsWith('device.') || action === 'admin.login') return 'device';
   if (action.startsWith('receipt.')) return 'receipt';
+  if (action.startsWith('business_day.') || action.startsWith('backup.')) return 'operation';
   return 'master';
 }
 

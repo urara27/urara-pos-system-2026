@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { io as connect, type Socket } from 'socket.io-client';
@@ -35,7 +37,9 @@ export async function createTestApp() {
       { code: STAFF.code, name: 'スタッフ', role: 'staff', pinHash: await hashSecret(STAFF.pin) },
     ])
     .run();
-  const built = await buildApp({ db: database.db });
+  // バックアップはテストごとの一時フォルダへ（リポジトリを汚さない）
+  const backupDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pos-test-backup-'));
+  const built = await buildApp({ db: database.db, backup: { dir: backupDir, keep: 3 } });
   const { app } = built;
 
   const adminLogin = async () => {
@@ -63,9 +67,10 @@ export async function createTestApp() {
   const close = async () => {
     await app.close();
     database.close();
+    fs.rmSync(backupDir, { recursive: true, force: true });
   };
 
-  return { ...built, database, adminLogin, pairDevice, close, deviceHeader: DEVICE_TOKEN_HEADER };
+  return { ...built, database, backupDir, adminLogin, pairDevice, close, deviceHeader: DEVICE_TOKEN_HEADER };
 }
 
 export type TestApp = Awaited<ReturnType<typeof createTestApp>>;

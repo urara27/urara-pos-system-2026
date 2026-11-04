@@ -15,6 +15,7 @@ import { ProductsPage } from './admin/ProductsPage';
 import { RegistersPage } from './admin/RegistersPage';
 import { SettingsPage } from './admin/SettingsPage';
 import { AuditLogsPage } from './admin/AuditLogsPage';
+import { OperationsPage } from './admin/OperationsPage';
 import { SalesPage } from './admin/SalesPage';
 import { SettlementsPage } from './admin/SettlementsPage';
 import './admin/admin.css';
@@ -109,6 +110,7 @@ const NAV = [
   { to: '/admin/registers', label: 'レジ' },
   { to: '/admin/settings', label: '店舗・運用設定' },
   { to: '/admin/audit-logs', label: '操作ログ' },
+  { to: '/admin/operations', label: '閉店・バックアップ' },
 ] as const;
 
 function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: () => void }) {
@@ -148,6 +150,7 @@ function AdminShell({ employee, onLogout }: { employee: EmployeeInfo; onLogout: 
             <Route path="sales" element={<SalesPage />} />
             <Route path="settlements" element={<SettlementsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
+            <Route path="operations" element={<OperationsPage />} />
             <Route path="products" element={<ProductsPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="option-groups" element={<OptionGroupsPage />} />

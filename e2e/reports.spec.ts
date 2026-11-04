@@ -61,4 +61,13 @@ test('売上・レジ精算・操作ログの画面', async ({ page, request }) 
   await page.getByRole('button', { name: '詳細' }).first().click();
   await expect(page.locator('.audit-detail')).toContainText('reason');
   await snap(page, 'reports-3-audit');
+
+  // 営業日・バックアップ: 開設中のレジがあるうちは閉店できない。手動バックアップは取れる
+  await page.getByRole('link', { name: '閉店・バックアップ' }).click();
+  await expect(page.getByRole('button', { name: '閉店する' })).toBeDisabled();
+  await expect(page.getByText('閉店する前に、次のレジを閉設してください')).toBeVisible();
+  await page.getByRole('button', { name: '今すぐバックアップ' }).click();
+  await expect(page.locator('.notice')).toContainText(/バックアップ pos-.+\.sqlite を作成しました/);
+  await expect(page.locator('.card', { hasText: '保存先' }).locator('tbody tr')).toHaveCount(1);
+  await snap(page, 'reports-4-operations');
 });

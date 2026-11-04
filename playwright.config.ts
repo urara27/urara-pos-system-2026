@@ -9,6 +9,7 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 3210;
 const root = import.meta.dirname;
 const dbPath = path.join(os.tmpdir(), `pos-e2e-${Date.now()}.sqlite`);
+const backupDir = path.join(os.tmpdir(), `pos-e2e-backups-${Date.now()}`);
 
 export const E2E_ADMIN = { code: '1', password: 'e2e-admin-password', pin: '0000' };
 
@@ -39,6 +40,7 @@ export default defineConfig({
       DATABASE_PATH: dbPath,
       MIGRATIONS_DIR: path.join(root, 'apps/server/drizzle'),
       WEB_DIST_DIR: path.join(root, 'apps/web/dist'),
+      BACKUP_DIR: backupDir,
       INITIAL_ADMIN_CODE: E2E_ADMIN.code,
       INITIAL_ADMIN_PASSWORD: E2E_ADMIN.password,
       LOG_LEVEL: 'warn',

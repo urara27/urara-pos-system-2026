@@ -94,6 +94,16 @@ pnpm モノレポ / TypeScript strict
 - 金額の表示は共有の `yenText`（マイナスは `-¥900`）。画面ごとに独自の書式を作らない
 - 操作ログの分類は `auditCategoryOf()`、表示名は `AUDIT_ACTION_LABELS`。新しい操作を `writeAudit()` で記録したら表示名も足す
 
+## 運用（フェーズ7）
+- 閉店・自動閉店・手動バックアップは `modules/operations/service.ts`、バックアップ本体は `modules/operations/backup.ts`（better-sqlite3 のオンラインバックアップ、`.part` で書いてから名前を変える、`BACKUP_KEEP` 世代）
+- 自動閉店の見回り（1分ごと）は `buildApp({ autoClose: true })` のときだけ動く（`main.ts`）。テストでは `operations.autoClose()` を直接呼ぶ
+- 閉じた営業日には `currentBusinessDay()` が 409 を返す（会計・開設を止める）。自動採番は営業日ごとのカウンタなので、閉店で特別なリセット処理はしない
+- テストのアプリは一時フォルダにバックアップする（`test/helpers.ts`）。リポジトリ内に `backups/` を作らない
+- 管理者パスワードの復旧は `ADMIN_PASSWORD_RESET=1`（`bootstrap.ts`）。使い終わったら外す運用
+- サーバーの package.json の `files` は `dist` と `drizzle` だけ（`pnpm deploy` の出力＝イメージに入るもの）
+- 構築・運用の手順は `docs/setup-guide.md`。運用の手順や画面を変えたらここも直す
+- この開発機には Docker / WSL が無い。Docker 周りは、イメージと同じ配置を `pnpm deploy --prod --legacy` で再現して確かめた（Windows では出力先を同じドライブにすること）
+
 ## デザイン
 - 管理画面は **デジタル庁デザインシステム（DADS, https://design.digital.go.jp/dads/）** に準拠する。スタイルは `apps/web/src/routes/admin/admin.css` に集約し、`.dads` クラスの内側に閉じる（レジ・キッチン等は対象外）
 - 色・文字サイズ・行間・角丸・影は公式トークン `@digital-go-jp/design-tokens`（MIT）の CSS 変数（`--color-key-900`, `--color-neutral-solid-gray-800`, `--font-size-16`, `--border-radius-8` など）を使い、色を直書きしない
@@ -102,4 +112,4 @@ pnpm モノレポ / TypeScript strict
 
 ## 進め方
 - `docs/development-plan.md` 第7節のフェーズ順に実装し、フェーズごとに動作確認手順を示してコミットする
-- 現在: フェーズ6（売上・精算）完了。次はフェーズ7（運用: 閉店操作、自動起動、バックアップと復元、セットアップ手順書）
+- 現在: フェーズ1〜7 完了。残りは（将来）プリンター・ドロアの実機ドライバー（機器の導入時に別途）

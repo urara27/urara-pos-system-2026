@@ -9,6 +9,8 @@ const { app } = await buildApp({
   db: database.db,
   logger: { level: process.env.LOG_LEVEL ?? 'info' },
   webDistDir: config.webDistDir,
+  backup: config.backup,
+  autoClose: true,
 });
 await bootstrap(database.db, config, app.log);
 

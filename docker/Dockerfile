@@ -23,6 +23,7 @@ ENV NODE_ENV=production \
     TZ=Asia/Tokyo \
     PORT=3000 \
     DATABASE_PATH=/data/pos.sqlite \
+    BACKUP_DIR=/backups \
     MIGRATIONS_DIR=/app/drizzle \
     WEB_DIST_DIR=/app/web
 WORKDIR /app
@@ -31,7 +32,7 @@ COPY --from=build /out/node_modules ./node_modules
 COPY --from=build /app/apps/server/dist ./dist
 COPY --from=build /app/apps/server/drizzle ./drizzle
 COPY --from=build /app/apps/web/dist ./web
-RUN mkdir -p /data && chown node:node /data
+RUN mkdir -p /data /backups && chown node:node /data /backups
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \

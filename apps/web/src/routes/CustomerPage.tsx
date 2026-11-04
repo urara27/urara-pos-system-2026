@@ -62,6 +62,11 @@ export function CustomerPage() {
     },
   });
 
+  // 自動再生を許可したキオスク（--autoplay-policy=no-user-gesture-required）なら、タップなしで始める
+  useEffect(() => {
+    void unlockAudio().then((ok) => ok && setStarted(true));
+  }, []);
+
   // 強調の期限切れを掃除する
   useEffect(() => {
     const timer = setInterval(() => {

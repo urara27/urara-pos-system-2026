@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import fastifyStatic from '@fastify/static';
+import type Database from 'better-sqlite3';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import type { Db } from './db/client.js';
 import { registerErrorHandler } from './lib/errors.js';
@@ -23,15 +24,31 @@ import { refundRoutes } from './modules/refunds/routes.js';
 import { RefundService } from './modules/refunds/service.js';
 import { reportRoutes } from './modules/reports/routes.js';
 import { ReportService } from './modules/reports/service.js';
+import { BackupService, type BackupOptions } from './modules/operations/backup.js';
+import { operationsRoutes } from './modules/operations/routes.js';
+import { OperationsService, startAutoClose } from './modules/operations/service.js';
 import { RealtimeHub } from './realtime/hub.js';
+
+/** drizzle() が返す DB には元の better-sqlite3 接続が $client として付いている */
+const sqliteOf = (db: Db) => (db as unknown as { $client: Database.Database }).$client;
 
 export interface BuildAppOptions {
   db: Db;
   logger?: FastifyServerOptions['logger'];
   webDistDir?: string | null;
+  /** 省略時は ./data/backups に30世代 */
+  backup?: BackupOptions;
+  /** 閉店し忘れた営業日を切替時刻に自動で閉じる見回りを動かす（本番のみ） */
+  autoClose?: boolean;
 }
 
-export async function buildApp({ db, logger = false, webDistDir = null }: BuildAppOptions) {
+export async function buildApp({
+  db,
+  logger = false,
+  webDistDir = null,
+  backup = { dir: path.resolve('./data/backups'), keep: 30 },
+  autoClose = false,
+}: BuildAppOptions) {
   const app = Fastify({ logger, trustProxy: true });
   registerErrorHandler(app);
   app.decorateRequest('device', null);
@@ -51,6 +68,11 @@ export async function buildApp({ db, logger = false, webDistDir = null }: BuildA
   const printing = new PrintingService(db, new PrinterRegistry(app.log));
   const refunds = new RefundService(db, registers);
   const reports = new ReportService(db, registers);
+  const operations = new OperationsService(db, new BackupService(db, sqliteOf(db), backup, app.log), app.log);
+  if (autoClose) {
+    const stop = startAutoClose(operations, app.log);
+    app.addHook('onClose', async () => stop());
+  }
 
   app.get('/api/system/health', async () => ({ ok: true, bootId: hub.bootId, serverTime: Date.now() }));
   authRoutes(app, auth, guards);
@@ -62,6 +84,7 @@ export async function buildApp({ db, logger = false, webDistDir = null }: BuildA
   await app.register(async (scope) => deviceAdminRoutes(scope, db, auth, hub, guards));
   await app.register(async (scope) => masterAdminRoutes(scope, { db, masters, employees, settings, hub, guards }));
   await app.register(async (scope) => reportRoutes(scope, reports, guards));
+  await app.register(async (scope) => operationsRoutes(scope, operations, guards));
 
   if (webDistDir && fs.existsSync(path.join(webDistDir, 'index.html'))) {
     await app.register(fastifyStatic, { root: webDistDir, wildcard: false });
@@ -74,5 +97,5 @@ export async function buildApp({ db, logger = false, webDistDir = null }: BuildA
     });
   }
 
-  return { app, hub, auth, printing };
+  return { app, hub, auth, printing, operations };
 }

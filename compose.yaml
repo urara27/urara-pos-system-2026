@@ -1,5 +1,12 @@
 # 店内サーバーでの起動: docker compose up -d --build
-# サーバー再起動時も restart: unless-stopped で自動起動する（Docker サービスの自動起動が前提）
+# サーバーの再起動時は restart: unless-stopped で自動起動する（Docker サービス自体の自動起動が前提。手順書を参照）
+x-logging: &logging
+  # コンテナのログでディスクが埋まらないよう、ファイルの大きさと数を制限する
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   app:
     build:
@@ -10,12 +17,16 @@ services:
       TZ: ${TZ:-Asia/Tokyo}
       INITIAL_ADMIN_CODE: ${INITIAL_ADMIN_CODE:-}
       INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
+      ADMIN_PASSWORD_RESET: ${ADMIN_PASSWORD_RESET:-}
+      BACKUP_KEEP: ${BACKUP_KEEP:-30}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
-      # DB（SQLite）。コンテナ内は uid 1000 (node) で書き込む
+      # DB（SQLite）とバックアップ。コンテナ内は uid 1000 (node) で書き込む
       - ./data:/data
+      - ./backups:/backups
     expose:
       - "3000"
+    logging: *logging
 
   caddy:
     image: caddy:2.10-alpine
@@ -29,6 +40,7 @@ services:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./certs:/certs:ro
       - caddy_data:/data
+    logging: *logging
 
 volumes:
   caddy_data:

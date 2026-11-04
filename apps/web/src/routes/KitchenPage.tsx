@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   DINING_OPTION_LABELS,
   formatOrderNumber,
@@ -58,6 +58,10 @@ export function KitchenPage() {
   const device = useDevice();
   const [view, setView] = useState<KitchenView>(loadView);
   const [soundOn, setSoundOn] = useState(false);
+  // 自動再生を許可したキオスクなら、ボタンを押さなくても通知音が鳴る
+  useEffect(() => {
+    void unlockAudio().then(setSoundOn);
+  }, []);
   const [busyId, setBusyId] = useState<number | null>(null);
   const { board, reload, apply } = useOrderBoard();
   const { settings, reload: reloadSettings } = useDeviceSettings();
